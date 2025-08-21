@@ -184,12 +184,18 @@ def director_dashboard():
         'high_risks': len([r for r in risks if r.get('risk_level') == 'high'])
     }
     
+    # Get user notifications  
+    user = get_current_user()
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
     return render_template('director/dashboard.html', 
                          pending_audits=pending_audits,
                          completed_audits=completed_audits,
                          all_audits=all_audits,
                          risks=risks,
-                         stats=stats)
+                         stats=stats,
+                         current_user=user,
+                         notifications=notifications)
 
 @app.route('/head_of_business_control_dashboard')
 @login_required
@@ -227,6 +233,10 @@ def head_of_business_control_dashboard():
         'overdue_actions': len(overdue_actions)
     }
     
+    # Get user notifications  
+    user = get_current_user()
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
     return render_template('head_of_business_control/dashboard.html',
                          draft_audits=draft_audits,
                          approved_audits=approved_audits,
@@ -235,7 +245,9 @@ def head_of_business_control_dashboard():
                          auditees=auditees,
                          risks=risks,
                          overdue_actions=overdue_actions,
-                         stats=stats)
+                         stats=stats,
+                         current_user=user,
+                         notifications=notifications)
 
 @app.route('/auditor_dashboard')
 @login_required
@@ -267,12 +279,17 @@ def auditor_dashboard():
         'unread_messages': len([m for m in auditor_messages if not m.get('is_read', True)])
     }
     
+    # Get user notifications  
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
     return render_template('auditor/dashboard.html',
                          assigned_audits=assigned_audits,
                          findings=auditor_findings,
                          messages=auditor_messages,
                          evidence_files=evidence_files,
-                         stats=stats)
+                         stats=stats,
+                         current_user=user,
+                         notifications=notifications)
 
 @app.route('/auditee_dashboard')
 @login_required
@@ -306,12 +323,17 @@ def auditee_dashboard():
         'unread_messages': len([m for m in auditee_messages if not m.get('is_read', True)])
     }
     
+    # Get user notifications  
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
     return render_template('auditee/dashboard.html',
-                         auditee_audits=auditee_audits,
-                         my_actions=my_actions,
+                         my_audits=auditee_audits,
+                         corrective_actions=my_actions,
                          messages=auditee_messages,
                          evidence_files=my_evidence,
-                         stats=stats)
+                         stats=stats,
+                         current_user=user,
+                         notifications=notifications)
 
 # Risk Assessment Routes
 @app.route('/risk-assessment')
@@ -866,7 +888,30 @@ def document_requests():
 @role_required('auditee')
 def upload_evidence_page():
     """Evidence upload page"""
-    return render_template('auditee/upload_evidence.html')
+    user = get_current_user()
+    
+    # Get sample finding (should be passed from URL parameter)
+    finding_id = request.args.get('finding_id')
+    finding = None
+    if finding_id:
+        finding = DATA_STORE['findings'].get(finding_id)
+    
+    # If no finding, create a sample for template
+    if not finding:
+        finding = {
+            'id': 'sample',
+            'title': 'Sample Finding',
+            'description': 'Please select a finding to upload evidence for.',
+            'severity': 'medium',
+            'status': 'open'
+        }
+    
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    return render_template('auditee/upload_evidence.html', 
+                         finding=finding,
+                         current_user=user,
+                         notifications=notifications)
 
 @app.route('/auditee-reports')
 @login_required
@@ -1183,7 +1228,19 @@ def audit_detail(audit_id):
     audit = DATA_STORE['audits'].get(audit_id)
     if not audit:
         abort(404)
-    return render_template('audits/detail.html', audit=audit)
+    
+    # Get current user and notifications
+    user = get_current_user()
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    # Get findings for this audit
+    findings = [f for f in DATA_STORE['findings'].values() if f.get('audit_id') == audit_id]
+    
+    return render_template('audits/detail.html', 
+                         audit=audit,
+                         findings=findings,
+                         current_user=user,
+                         notifications=notifications)
 
 @app.route('/audit/<audit_id>/edit')
 @login_required

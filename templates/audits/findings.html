@@ -13,7 +13,7 @@
                 <p class="text-muted mb-0">{{ audit.reference_number }} - {{ audit.title }}</p>
             </div>
             <div class="d-flex gap-2">
-                {% if user.role in ['admin', 'auditor'] or user.id == audit.auditor_id %}
+                {% if current_user.get('role') in ['director', 'auditor'] or current_user.get('id') == audit.get('auditor_id') %}
                 <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#addFindingModal">
                     <i class="fas fa-plus me-2"></i>Add Finding
                 </button>
@@ -107,14 +107,14 @@
                                         <i class="fas fa-tasks me-2"></i>View Actions
                                     </a>
                                 </li>
-                                {% if user.role in ['admin', 'auditor'] or user.id == audit.auditor_id %}
+                                {% if current_user.get('role') in ['director', 'auditor'] or current_user.get('id') == audit.get('auditor_id') %}
                                 <li>
                                     <button class="dropdown-item" onclick="editFinding({{ finding.id }})">
                                         <i class="fas fa-edit me-2"></i>Edit Finding
                                     </button>
                                 </li>
                                 {% endif %}
-                                {% if user.role in ['admin', 'supervisor'] %}
+                                {% if current_user.get('role') in ['director', 'head_of_business_control'] %}
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <button class="dropdown-item text-danger" onclick="deleteFinding({{ finding.id }})">
@@ -171,13 +171,13 @@
                     <i class="fas fa-search fa-3x text-muted mb-3"></i>
                     <h5 class="text-muted">No Findings Yet</h5>
                     <p class="text-muted">
-                        {% if user.role in ['admin', 'auditor'] or user.id == audit.auditor_id %}
+                        {% if current_user.get('role') in ['director', 'auditor'] or current_user.get('id') == audit.get('auditor_id') %}
                             Start documenting audit findings to track issues and corrective actions.
                         {% else %}
                             No findings have been identified for this audit yet.
                         {% endif %}
                     </p>
-                    {% if user.role in ['admin', 'auditor'] or user.id == audit.auditor_id %}
+                    {% if current_user.get('role') in ['director', 'auditor'] or current_user.get('id') == audit.get('auditor_id') %}
                     <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#addFindingModal">
                         <i class="fas fa-plus me-2"></i>Add First Finding
                     </button>
