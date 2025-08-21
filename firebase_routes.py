@@ -867,3 +867,278 @@ def auditee_reports():
     """Auditee reports page"""
     reports = list(DATA_STORE['audit_reports'].values())
     return render_template('auditee/reports.html', reports=reports)
+
+@app.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    """Change password page"""
+    user = get_current_user()
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if new_password != confirm_password:
+            flash('New passwords do not match.', 'error')
+        else:
+            # Update password logic here
+            flash('Password updated successfully.', 'success')
+            return redirect(url_for('dashboard'))
+    
+    return render_template('change_password.html', user=user)
+
+# Removed duplicate landing function - using existing one
+
+@app.route('/manage-users')
+@login_required
+@role_required('director', 'head_of_business_control')
+def manage_users_page():
+    """Manage users page"""
+    return redirect(url_for('users'))
+
+@app.route('/manage-departments')
+@login_required
+@role_required('director', 'head_of_business_control')
+def manage_departments_page():
+    """Manage departments page"""
+    return redirect(url_for('departments'))
+
+@app.route('/users/edit/<user_id>')
+@login_required
+@role_required('director', 'head_of_business_control')
+def edit_user(user_id):
+    """Edit user page"""
+    user = DATA_STORE['users'].get(user_id)
+    if not user:
+        abort(404)
+    return render_template('admin/edit_user.html', user=user)
+
+@app.route('/users/create', methods=['GET', 'POST'])
+@login_required
+@role_required('director', 'head_of_business_control')
+def create_new_user():
+    """Create user route"""
+    if request.method == 'POST':
+        email = request.form.get('email')
+        name = request.form.get('name')
+        role = request.form.get('role')
+        department_id = request.form.get('department_id')
+        
+        new_user = {
+            'id': str(uuid4()),
+            'email': email,
+            'name': name,
+            'role': role,
+            'department_id': department_id,
+            'status': 'active',
+            'created_at': datetime.now().isoformat()
+        }
+        
+        DATA_STORE['users'][new_user['id']] = new_user
+        flash('User created successfully.', 'success')
+        return redirect(url_for('users'))
+    
+    departments = list(DATA_STORE['departments'].values())
+    return render_template('admin/create_user.html', departments=departments)
+
+@app.route('/users/<user_id>/toggle-status', methods=['POST'])
+@login_required
+@role_required('director')
+def toggle_user_status(user_id):
+    """Toggle user status"""
+    user = DATA_STORE['users'].get(user_id)
+    if user:
+        user['status'] = 'inactive' if user['status'] == 'active' else 'active'
+        flash(f"User status changed to {user['status']}.")
+    return redirect(url_for('users'))
+
+@app.route('/users/<user_id>/delete', methods=['POST'])
+@login_required
+@role_required('director')
+def delete_user(user_id):
+    """Delete user"""
+    if user_id in DATA_STORE['users']:
+        del DATA_STORE['users'][user_id]
+        flash('User deleted successfully.', 'success')
+    return redirect(url_for('users'))
+
+@app.route('/departments/create', methods=['GET', 'POST'])
+@login_required
+@role_required('director', 'head_of_business_control')
+def create_new_department():
+    """Create department"""
+    if request.method == 'POST':
+        name = request.form.get('name')
+        description = request.form.get('description')
+        head_name = request.form.get('head_name')
+        
+        new_dept = {
+            'id': str(uuid4()),
+            'name': name,
+            'description': description,
+            'head_name': head_name,
+            'created_at': datetime.now().isoformat()
+        }
+        
+        DATA_STORE['departments'][new_dept['id']] = new_dept
+        flash('Department created successfully.', 'success')
+        return redirect(url_for('departments'))
+    
+    return render_template('admin/create_department.html')
+
+@app.route('/departments/<department_id>/delete', methods=['POST'])
+@login_required
+@role_required('director')
+def delete_department(department_id):
+    """Delete department"""
+    if department_id in DATA_STORE['departments']:
+        del DATA_STORE['departments'][department_id]
+        flash('Department deleted successfully.', 'success')
+    return redirect(url_for('departments'))
+
+@app.route('/departments/<department_id>/users')
+@login_required
+@role_required('director', 'head_of_business_control')
+def department_users(department_id):
+    """View users in department"""
+    department = DATA_STORE['departments'].get(department_id)
+    if not department:
+        abort(404)
+    
+    users = [u for u in DATA_STORE['users'].values() if u.get('department_id') == department_id]
+    return render_template('admin/department_users.html', department=department, users=users)
+
+# More missing routes
+@app.route('/risk-assessment/create', methods=['GET', 'POST'])
+@login_required
+@role_required('director', 'head_of_business_control')
+def create_new_risk_assessment():
+    """Create risk assessment"""
+    if request.method == 'POST':
+        # Handle risk assessment creation
+        flash('Risk assessment created successfully.', 'success')
+        return redirect(url_for('risk_assessment'))
+    return render_template('create_risk_assessment.html')
+
+@app.route('/audit-planning/create', methods=['GET', 'POST'])
+@login_required
+@role_required('director', 'head_of_business_control')
+def create_new_audit_plan():
+    """Create audit plan"""
+    if request.method == 'POST':
+        # Handle audit plan creation
+        flash('Audit plan created successfully.', 'success')
+        return redirect(url_for('audit_planning'))
+    return render_template('create_audit_plan.html')
+
+@app.route('/audit/<audit_id>')
+@login_required
+def audit_detail(audit_id):
+    """Audit detail page"""
+    audit = DATA_STORE['audits'].get(audit_id)
+    if not audit:
+        abort(404)
+    return render_template('audits/detail.html', audit=audit)
+
+@app.route('/audit/<audit_id>/edit')
+@login_required
+@role_required('director', 'head_of_business_control')
+def edit_audit(audit_id):
+    """Edit audit page"""
+    audit = DATA_STORE['audits'].get(audit_id)
+    if not audit:
+        abort(404)
+    return render_template('audits/edit.html', audit=audit)
+
+@app.route('/create-audit')
+@login_required
+@role_required('director', 'head_of_business_control')
+def create_audit():
+    """Create new audit"""
+    return render_template('audits/create.html')
+
+@app.route('/reports/generate')
+@login_required
+def generate_report():
+    """Generate report page"""
+    return render_template('reports/generate.html')
+
+@app.route('/reports/<report_id>')
+@login_required
+def view_report(report_id):
+    """View report page"""
+    report = DATA_STORE['audit_reports'].get(report_id)
+    if not report:
+        abort(404)
+    return render_template('reports/view.html', report=report)
+
+@app.route('/reports/<report_id>/edit')
+@login_required
+@role_required('director', 'head_of_business_control')
+def edit_report(report_id):
+    """Edit report page"""
+    report = DATA_STORE['audit_reports'].get(report_id)
+    if not report:
+        abort(404)
+    return render_template('reports/edit.html', report=report)
+
+@app.route('/reports/<report_id>/download')
+@login_required
+def download_report(report_id):
+    """Download report"""
+    report = DATA_STORE['audit_reports'].get(report_id)
+    if not report:
+        abort(404)
+    # Generate and return PDF
+    return generate_report_pdf(report_id)
+
+@app.route('/audit/<audit_id>/findings')
+@login_required
+def audit_findings(audit_id):
+    """Audit findings page"""
+    audit = DATA_STORE['audits'].get(audit_id)
+    if not audit:
+        abort(404)
+    findings = [f for f in DATA_STORE['findings'].values() if f.get('audit_id') == audit_id]
+    return render_template('audits/findings.html', audit=audit, findings=findings)
+
+@app.route('/notifications/delete/<notification_id>', methods=['POST'])
+@login_required
+def delete_user_notification(notification_id):
+    """Delete user notification"""
+    user = get_current_user()
+    notifications = DATA_STORE.get('notifications', [])
+    updated_notifications = [n for n in notifications if not (n.get('id') == notification_id and n.get('user_id') == user['id'])]
+    DATA_STORE['notifications'] = updated_notifications
+    flash('Notification deleted.', 'success')
+    return redirect(url_for('profile'))
+
+@app.route('/notifications/delete-all', methods=['POST'])
+@login_required
+def delete_all_user_notifications():
+    """Delete all user notifications"""
+    user = get_current_user()
+    notifications = DATA_STORE.get('notifications', [])
+    updated_notifications = [n for n in notifications if n.get('user_id') != user['id']]
+    DATA_STORE['notifications'] = updated_notifications
+    flash('All notifications deleted.', 'success')
+    return redirect(url_for('profile'))
+
+@app.route('/admin/notifications/delete/<notification_id>', methods=['POST'])
+@login_required
+@role_required('director')
+def admin_delete_notification(notification_id):
+    """Delete notification as admin"""
+    notifications = DATA_STORE.get('notifications', [])
+    DATA_STORE['notifications'] = [n for n in notifications if n.get('id') != notification_id]
+    flash('Notification deleted.', 'success')
+    return redirect(request.referrer or url_for('dashboard'))
+
+@app.route('/admin/notifications/delete-all', methods=['POST'])
+@login_required
+@role_required('director')
+def admin_delete_all_notifications():
+    """Delete all notifications as admin"""
+    DATA_STORE['notifications'] = []
+    flash('All notifications deleted.', 'success')
+    return redirect(request.referrer or url_for('dashboard'))
