@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Report Library{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-book mr-2"></i>Audit Report Library
+        </h1>
+        <div>
+            <button class="btn btn-outline-primary mr-2" onclick="toggleSearchFilter()">
+                <i class="fas fa-search mr-1"></i>Search & Filter
+            </button>
+            <a href="/reports/generate" class="btn btn-primary">
+                <i class="fas fa-plus mr-1"></i>Generate Report
+            </a>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div id="searchFilterSection" class="card shadow mb-4" style="display: none;">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="searchQuery" class="form-label">Search Reports</label>
+                        <input type="text" class="form-control" id="searchQuery" placeholder="Search by title, audit, or content...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="statusFilter" class="form-label">Status</label>
+                        <select class="form-control" id="statusFilter">
+                            <option value="">All Statuses</option>
+                            <option value="draft">Draft</option>
+                            <option value="final">Final</option>
+                            <option value="published">Published</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="dateRange" class="form-label">Date Range</label>
+                        <select class="form-control" id="dateRange">
+                            <option value="">All Dates</option>
+                            <option value="last_week">Last Week</option>
+                            <option value="last_month">Last Month</option>
+                            <option value="last_quarter">Last Quarter</option>
+                            <option value="last_year">Last Year</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="mb-3">
+                        <label class="form-label">&nbsp;</label>
+                        <button class="btn btn-primary form-control" onclick="applyFilters()">Apply</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for report in reports %}
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">{{ report.report_title }}</h6>
+                        <div>
+                            <span class="badge 
+                                {% if report.status == 'draft' %}badge-warning
+                                {% elif report.status == 'final' %}badge-success
+                                {% elif report.status == 'published' %}badge-info
+                                {% else %}badge-secondary{% endif %}">
+                                {{ report.status.title() }}
+                            </span>
+                            {% if report.is_confidential %}
+                            <span class="badge badge-danger ml-1">
+                                <i class="fas fa-lock"></i> Confidential
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ report.executive_summary[:150] if report.executive_summary else 'No summary available.' }}
+                        {% if report.executive_summary and report.executive_summary|length > 150 %}...{% endif %}
+                    </p>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <strong>Report Number:</strong><br>
+                                {{ report.report_number }}
+                            </small>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <strong>Related Audit:</strong><br>
+                                {% set audit = audit_lookup.get(report.audit_id, {}) %}
+                                {{ audit.get('title', 'Unknown Audit')[:30] }}
+                                {% if audit.get('title', '')|length > 30 %}...{% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <strong>Created:</strong><br>
+                                {{ report.created_at.strftime('%Y-%m-%d') if report.created_at else 'Unknown' }}
+                            </small>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <strong>Last Updated:</strong><br>
+                                {{ report.updated_at.strftime('%Y-%m-%d') if report.updated_at else 'Never' }}
+                            </small>
+                        </div>
+                    </div>
+
+                    {% if report.findings_count %}
+                    <div class="mb-3">
+                        <small class="text-info">
+                            <i class="fas fa-exclamation-triangle mr-1"></i>
+                            {{ report.findings_count }} Finding(s) Identified
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <a href="/reports/{{ report.id }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye mr-1"></i>View
+                            </a>
+                            {% if report.status != 'published' %}
+                            <a href="/reports/{{ report.id }}/edit" class="btn btn-sm btn-outline-warning">
+                                <i class="fas fa-edit mr-1"></i>Edit
+                            </a>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <a href="/reports/{{ report.id }}/download" class="btn btn-sm btn-success">
+                                <i class="fas fa-download mr-1"></i>PDF
+                            </a>
+                            {% if report.status == 'final' or report.status == 'published' %}
+                            <button class="btn btn-sm btn-outline-info" onclick="shareReport('{{ report.id }}')">
+                                <i class="fas fa-share mr-1"></i>Share
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not reports %}
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <i class="fas fa-book fa-3x text-muted mb-3"></i>
+                    <h5>No Reports Found</h5>
+                    <p class="text-muted">No audit reports are available yet. Reports will appear here once audits are completed.</p>
+                    <a href="/reports/generate" class="btn btn-primary">Generate First Report</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function toggleSearchFilter() {
+    const section = document.getElementById('searchFilterSection');
+    section.style.display = section.style.display === 'none' ? 'block' : 'none';
+}
+
+function applyFilters() {
+    const query = document.getElementById('searchQuery').value;
+    const status = document.getElementById('statusFilter').value;
+    const dateRange = document.getElementById('dateRange').value;
+    
+    let url = '/reports?';
+    if (query) url += `q=${encodeURIComponent(query)}&`;
+    if (status) url += `status=${status}&`;
+    if (dateRange) url += `date=${dateRange}&`;
+    
+    window.location.href = url;
+}
+
+function shareReport(reportId) {
+    if (navigator.share) {
+        navigator.share({
+            title: 'Audit Report',
+            url: `/reports/${reportId}`
+        });
+    } else {
+        const url = window.location.origin + `/reports/${reportId}`;
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Report link copied to clipboard!');
+        });
+    }
+}
+</script>
+{% endblock %}

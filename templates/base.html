@@ -35,7 +35,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('audit_list') }}">
+                        <a class="nav-link" href="{{ url_for('audit_planning') }}">
                             <i class="fas fa-list me-1"></i>Audits
                         </a>
                     </li>
@@ -46,10 +46,10 @@
                             <i class="fas fa-cog me-1"></i>Administration
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('admin_users') }}">
+                            <li><a class="dropdown-item" href="{{ url_for('manage_users') }}">
                                 <i class="fas fa-users me-1"></i>Manage Users
                             </a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('admin_departments') }}">
+                            <li><a class="dropdown-item" href="{{ url_for('manage_departments') }}">
                                 <i class="fas fa-building me-1"></i>Manage Departments
                             </a></li>
                         </ul>
@@ -58,7 +58,7 @@
                     
                     {% if current_user.role in ['admin', 'supervisor'] %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('create_audit') }}">
+                        <a class="nav-link" href="/audit-planning/create">
                             <i class="fas fa-plus me-1"></i>Create Audit
                         </a>
                     </li>
@@ -102,10 +102,10 @@
                             </span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ url_for('profile') }}">
+                            <li><a class="dropdown-item" href="/profile">
                                 <i class="fas fa-user-circle me-1"></i>Profile
                             </a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('change_password') }}">
+                            <li><a class="dropdown-item" href="/profile">
                                 <i class="fas fa-key me-1"></i>Change Password
                             </a></li>
                             <li><hr class="dropdown-divider"></li>

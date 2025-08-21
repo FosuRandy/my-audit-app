@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Risk Assessment{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-shield-alt mr-2"></i>Risk Assessment
+        </h1>
+        <a href="/risk-assessment/create" class="btn btn-primary">
+            <i class="fas fa-plus mr-1"></i>New Risk Assessment
+        </a>
+    </div>
+
+    <div class="row">
+        {% for risk in risks %}
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">{{ risk.risk_description[:50] }}...</h6>
+                        <span class="badge 
+                            {% if risk.risk_level == 'critical' %}badge-danger
+                            {% elif risk.risk_level == 'high' %}badge-warning
+                            {% elif risk.risk_level == 'medium' %}badge-info
+                            {% else %}badge-success{% endif %}">
+                            {{ risk.risk_level.title() }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ risk.risk_description }}</p>
+                    <p><strong>Department:</strong> 
+                        {% for dept in departments %}
+                            {% if dept.id == risk.department_id %}{{ dept.name }}{% endif %}
+                        {% endfor %}
+                    </p>
+                    <p><strong>Impact:</strong> {{ risk.impact_level.title() }}</p>
+                    <p><strong>Likelihood:</strong> {{ risk.likelihood_level.title() }}</p>
+                    <p><strong>Risk Score:</strong> {{ risk.risk_score }}/20</p>
+                    <p><strong>Created:</strong> {{ risk.created_at.strftime('%Y-%m-%d') if risk.created_at else 'Unknown' }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not risks %}
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <i class="fas fa-shield-alt fa-3x text-muted mb-3"></i>
+                    <h5>No Risk Assessments Found</h5>
+                    <p class="text-muted">Create your first risk assessment to begin managing organizational risks.</p>
+                    <a href="/risk-assessment/create" class="btn btn-primary">Create Risk Assessment</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -479,13 +479,23 @@ def messages():
     """View messages"""
     user = get_current_user()
     
-    # Get messages for current user
-    received_messages = [msg for msg in DATA_STORE['messages'].values() if msg.get('recipient_id') == user['id']]
-    sent_messages = [msg for msg in DATA_STORE['messages'].values() if msg.get('sender_id') == user['id']]
+    # Get all messages for current user (both received and sent)
+    user_messages = []
+    for msg in DATA_STORE['messages'].values():
+        if msg.get('recipient_id') == user['id'] or msg.get('sender_id') == user['id']:
+            user_messages.append(msg)
+    
+    # Get audit lookup for message references
+    audit_lookup = {audit_id: audit for audit_id, audit in DATA_STORE['audits'].items()}
+    
+    # Get all users for new message form
+    all_users = [u for u in DATA_STORE['users'].values() if u.get('id') != user['id']]
     
     return render_template('messages.html', 
-                         received_messages=received_messages,
-                         sent_messages=sent_messages)
+                         messages=user_messages,
+                         audit_lookup=audit_lookup,
+                         all_users=all_users,
+                         current_user=user)
 
 @app.route('/messages/send', methods=['POST'])
 @login_required
@@ -655,7 +665,8 @@ def report_library():
 @role_required('head_of_business_control', 'director')
 def manage_users():
     """User management"""
-    users = user_model.get_all()
+    # Get users from data store since Firebase models might not work in mock mode
+    users = list(DATA_STORE['users'].values())
     departments = list(DATA_STORE['departments'].values())
     
     return render_template('user_management.html', users=users, departments=departments)

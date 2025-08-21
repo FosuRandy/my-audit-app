@@ -11,6 +11,7 @@ DATA_STORE = {
     'departments': {},
     'audits': {},
     'risk_assessments': {},
+    'risks': {},  # Alias for risk_assessments for compatibility
     'findings': {},
     'corrective_actions': {},
     'messages': {},
@@ -127,6 +128,8 @@ def initialize_sample_data():
         'created_at': datetime.utcnow()
     }
     DATA_STORE['risk_assessments'][risk_id] = risk_data
+    # Also add to 'risks' for compatibility
+    DATA_STORE['risks'][risk_id] = risk_data
     
     print(f"Initialized sample data: {len(DATA_STORE['users'])} users, {len(DATA_STORE['departments'])} departments")
 
