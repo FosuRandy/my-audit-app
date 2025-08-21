@@ -40,7 +40,7 @@
                         </a>
                     </li>
                     
-                    {% if current_user.role == 'admin' %}
+                    {% if current_user.get('role') in ['director', 'head_of_business_control'] %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-cog me-1"></i>Administration
@@ -56,7 +56,7 @@
                     </li>
                     {% endif %}
                     
-                    {% if current_user.role in ['admin', 'supervisor'] %}
+                    {% if current_user.get('role') in ['director', 'head_of_business_control'] %}
                     <li class="nav-item">
                         <a class="nav-link" href="/audit-planning/create">
                             <i class="fas fa-plus me-1"></i>Create Audit
@@ -70,9 +70,15 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-bell"></i>
-                            {% if notifications and notifications|length > 0 %}
+                            {% set user_notifications = [] %}
+                            {% for notif in notifications or [] %}
+                                {% if notif.user_id == current_user.id %}
+                                    {% set _ = user_notifications.append(notif) %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if user_notifications|length > 0 %}
                             <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                {{ notifications|length }}
+                                {{ user_notifications|length }}
                             </span>
                             {% endif %}
                         </a>
@@ -96,16 +102,16 @@
                     <!-- User Menu -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user me-1"></i>{{ current_user.full_name }}
-                            <span class="badge bg-{{ 'success' if current_user.role == 'admin' else 'info' if current_user.role == 'supervisor' else 'warning' if current_user.role == 'auditor' else 'secondary' }} ms-1">
-                                {{ current_user.role.title() }}
+                            <i class="fas fa-user me-1"></i>{{ current_user.get('first_name', '') + ' ' + current_user.get('last_name', '') if current_user.get('first_name') else current_user.get('name', current_user.get('email', 'User')) }}
+                            <span class="badge bg-{{ 'success' if current_user.get('role') == 'director' else 'primary' if current_user.get('role') == 'head_of_business_control' else 'warning' if current_user.get('role') == 'auditor' else 'info' if current_user.get('role') == 'auditee' else 'secondary' }} ms-1">
+                                {{ (current_user.get('role', 'user').replace('_', ' ')).title() }}
                             </span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/profile">
+                            <li><a class="dropdown-item" href="{{ url_for('user_profile') }}">
                                 <i class="fas fa-user-circle me-1"></i>Profile
                             </a></li>
-                            <li><a class="dropdown-item" href="/profile">
+                            <li><a class="dropdown-item" href="{{ url_for('change_password') }}">
                                 <i class="fas fa-key me-1"></i>Change Password
                             </a></li>
                             <li><hr class="dropdown-divider"></li>

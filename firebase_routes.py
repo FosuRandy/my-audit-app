@@ -664,7 +664,7 @@ def report_library():
 @app.route('/users')
 @login_required
 @role_required('head_of_business_control', 'director')
-def manage_users():
+def users():
     """User management"""
     # Get users from data store since Firebase models might not work in mock mode
     users = list(DATA_STORE['users'].values())
@@ -719,7 +719,7 @@ def create_user():
 @app.route('/departments')
 @login_required
 @role_required('head_of_business_control', 'director')
-def manage_departments():
+def departments():
     """Department management"""
     departments = list(DATA_STORE['departments'].values())
     return render_template('department_management.html', departments=departments)
@@ -747,7 +747,7 @@ def create_department():
     except Exception as e:
         flash(f'Error creating department: {str(e)}', 'error')
     
-    return redirect(url_for('manage_departments'))
+    return redirect(url_for('departments'))
 
 # API Routes for AJAX calls
 @app.route('/api/audit/<audit_id>/findings')
@@ -895,6 +895,14 @@ def change_password():
     
     return render_template('change_password.html', user=user)
 
+@app.route('/user-profile')
+@login_required
+def user_profile():
+    """User profile page"""
+    user = get_current_user()
+    department = DATA_STORE['departments'].get(user.get('department_id')) if user.get('department_id') else None
+    return render_template('profile.html', user=user, department=department)
+
 # Removed duplicate landing function - using existing one
 
 @app.route('/manage-users')
@@ -911,7 +919,7 @@ def manage_departments_page():
     """Manage departments page"""
     return redirect(url_for('departments'))
 
-@app.route('/users/edit/<user_id>')
+@app.route('/users/edit/<user_id>', methods=['GET', 'POST'])
 @login_required
 @role_required('director', 'head_of_business_control')
 def edit_user(user_id):
@@ -919,7 +927,26 @@ def edit_user(user_id):
     user = DATA_STORE['users'].get(user_id)
     if not user:
         abort(404)
-    return render_template('admin/edit_user.html', user=user)
+    
+    if request.method == 'POST':
+        try:
+            # Update user data
+            user['first_name'] = request.form.get('first_name', user.get('first_name', ''))
+            user['last_name'] = request.form.get('last_name', user.get('last_name', ''))
+            user['email'] = request.form.get('email', user.get('email', ''))
+            user['role'] = request.form.get('role', user.get('role', ''))
+            user['department_id'] = request.form.get('department_id', user.get('department_id', ''))
+            user['phone'] = request.form.get('phone', user.get('phone', ''))
+            
+            log_audit_action('update_user', 'user', user_id, f'User updated: {user.get("email")}')
+            flash('User updated successfully.', 'success')
+            return redirect(url_for('users'))
+            
+        except Exception as e:
+            flash(f'Error updating user: {str(e)}', 'error')
+    
+    departments = list(DATA_STORE['departments'].values())
+    return render_template('admin/edit_user.html', user=user, departments=departments)
 
 @app.route('/users/create', methods=['GET', 'POST'])
 @login_required
@@ -945,19 +972,51 @@ def create_new_user():
         DATA_STORE['users'][new_user['id']] = new_user
         flash('User created successfully.', 'success')
         return redirect(url_for('users'))
+
+@app.route('/departments/<department_id>/users/<user_id>/edit', methods=['GET', 'POST'])
+@login_required
+@role_required('director', 'head_of_business_control')
+def edit_department_user(department_id, user_id):
+    """Edit user in department context"""
+    return redirect(url_for('edit_user', user_id=user_id))
+
+@app.route('/departments/<department_id>/users/<user_id>/deactivate', methods=['POST'])
+@login_required
+@role_required('director', 'head_of_business_control')
+def deactivate_department_user(department_id, user_id):
+    """Deactivate user in department context"""
+    try:
+        user = DATA_STORE['users'].get(user_id)
+        if user:
+            user['is_active'] = False
+            flash('User has been deactivated successfully.', 'success')
+            log_audit_action('deactivate_user', 'user', user_id, f'User deactivated: {user.get("email")}')
+        else:
+            flash('User not found.', 'error')
+    except Exception as e:
+        flash(f'Error deactivating user: {str(e)}', 'error')
+    return redirect(url_for('department_users', department_id=department_id))
     
     departments = list(DATA_STORE['departments'].values())
     return render_template('admin/create_user.html', departments=departments)
 
 @app.route('/users/<user_id>/toggle-status', methods=['POST'])
 @login_required
-@role_required('director')
+@role_required('director', 'head_of_business_control')
 def toggle_user_status(user_id):
     """Toggle user status"""
-    user = DATA_STORE['users'].get(user_id)
-    if user:
-        user['status'] = 'inactive' if user['status'] == 'active' else 'active'
-        flash(f"User status changed to {user['status']}.")
+    try:
+        user = DATA_STORE['users'].get(user_id)
+        if user:
+            current_status = user.get('is_active', True)
+            user['is_active'] = not current_status
+            status_text = 'active' if user['is_active'] else 'inactive'
+            flash(f"User status changed to {status_text}.", 'success')
+            log_audit_action('update_user_status', 'user', user_id, f'User status changed to {status_text}')
+        else:
+            flash('User not found.', 'error')
+    except Exception as e:
+        flash(f'Error updating user status: {str(e)}', 'error')
     return redirect(url_for('users'))
 
 @app.route('/users/<user_id>/delete', methods=['POST'])
@@ -999,9 +1058,39 @@ def create_new_department():
 @role_required('director')
 def delete_department(department_id):
     """Delete department"""
-    if department_id in DATA_STORE['departments']:
-        del DATA_STORE['departments'][department_id]
-        flash('Department deleted successfully.', 'success')
+    try:
+        if department_id in DATA_STORE['departments']:
+            # Check if department has users
+            users_in_dept = [u for u in DATA_STORE['users'].values() if u.get('department_id') == department_id]
+            if users_in_dept:
+                flash('Cannot delete department with active users. Please reassign users first.', 'error')
+            else:
+                del DATA_STORE['departments'][department_id]
+                flash('Department deleted successfully.', 'success')
+                log_audit_action('delete_department', 'department', department_id, 'Department deleted')
+        else:
+            flash('Department not found.', 'error')
+    except Exception as e:
+        flash(f'Error deleting department: {str(e)}', 'error')
+    return redirect(url_for('departments'))
+
+@app.route('/departments/<department_id>/toggle-status', methods=['POST'])
+@login_required
+@role_required('director', 'head_of_business_control')
+def toggle_department_status(department_id):
+    """Toggle department status"""
+    try:
+        department = DATA_STORE['departments'].get(department_id)
+        if department:
+            current_status = department.get('is_active', True)
+            department['is_active'] = not current_status
+            status_text = 'active' if department['is_active'] else 'inactive'
+            flash(f"Department status changed to {status_text}.", 'success')
+            log_audit_action('update_department_status', 'department', department_id, f'Department status changed to {status_text}')
+        else:
+            flash('Department not found.', 'error')
+    except Exception as e:
+        flash(f'Error updating department status: {str(e)}', 'error')
     return redirect(url_for('departments'))
 
 @app.route('/departments/<department_id>/users')
@@ -1038,6 +1127,54 @@ def create_new_audit_plan():
         flash('Audit plan created successfully.', 'success')
         return redirect(url_for('audit_planning'))
     return render_template('create_audit_plan.html')
+
+@app.route('/audits')
+@login_required
+def audit_list():
+    """List audits based on user role"""
+    user = get_current_user()
+    audits = list(DATA_STORE['audits'].values())
+    
+    # Filter audits based on role
+    if user['role'] == 'auditor':
+        audits = [audit for audit in audits if audit.get('auditor_id') == user['id']]
+    elif user['role'] == 'auditee':
+        audits = [audit for audit in audits if audit.get('auditee_id') == user['id']]
+    
+    return render_template('audits/list.html', audits=audits, user=user)
+
+@app.route('/audit/<audit_id>/finding/create', methods=['GET', 'POST'])
+@login_required
+@role_required('auditor')
+def create_finding(audit_id):
+    """Create a new finding"""
+    audit = DATA_STORE['audits'].get(audit_id)
+    if not audit:
+        abort(404)
+    
+    if request.method == 'POST':
+        try:
+            finding_data = {
+                'id': str(uuid4()),
+                'audit_id': audit_id,
+                'title': request.form.get('title'),
+                'description': request.form.get('description'),
+                'severity': request.form.get('severity'),
+                'status': 'open',
+                'created_by': get_current_user()['id'],
+                'created_at': datetime.now().isoformat(),
+                'recommendations': request.form.get('recommendations', '')
+            }
+            
+            DATA_STORE['findings'][finding_data['id']] = finding_data
+            log_audit_action('create_finding', 'finding', finding_data['id'], f'Finding created: {finding_data["title"]}')
+            flash('Finding created successfully.', 'success')
+            return redirect(url_for('audit_detail', audit_id=audit_id))
+            
+        except Exception as e:
+            flash(f'Error creating finding: {str(e)}', 'error')
+    
+    return render_template('auditor/create_finding.html', audit=audit)
 
 @app.route('/audit/<audit_id>')
 @login_required
