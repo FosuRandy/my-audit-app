@@ -25,14 +25,14 @@
                         <i class="fas fa-user-circle fa-5x text-{{ 'success' if user.role == 'admin' else 'info' if user.role == 'supervisor' else 'warning' if user.role == 'auditor' else 'secondary' }}"></i>
                     </div>
                 </div>
-                <h4>{{ user.full_name }}</h4>
-                <p class="text-muted">{{ user.email }}</p>
-                <span class="badge bg-{{ 'success' if user.role == 'admin' else 'info' if user.role == 'supervisor' else 'warning' if user.role == 'auditor' else 'secondary' }} fs-6 px-3 py-2">
-                    <i class="fas fa-{{ 'user-shield' if user.role == 'admin' else 'user-tie' if user.role == 'supervisor' else 'search' if user.role == 'auditor' else 'user-check' }} me-2"></i>
-                    {{ user.role.title() }}
+                <h4>{{ user.get('name', 'Unknown User') }}</h4>
+                <p class="text-muted">{{ user.get('email', 'No email') }}</p>
+                <span class="badge bg-{{ 'success' if user.get('role') == 'director' else 'info' if user.get('role') == 'head_of_business_control' else 'warning' if user.get('role') == 'auditor' else 'secondary' }} fs-6 px-3 py-2">
+                    <i class="fas fa-{{ 'user-shield' if user.get('role') == 'director' else 'user-tie' if user.get('role') == 'head_of_business_control' else 'search' if user.get('role') == 'auditor' else 'user-check' }} me-2"></i>
+                    {{ user.get('role', 'Unknown').replace('_', ' ').title() }}
                 </span>
                 
-                {% if user.password_reset_required %}
+                {% if user.get('password_reset_required', False) %}
                 <div class="alert alert-warning mt-3" role="alert">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     Password change required
@@ -51,7 +51,7 @@
                 <table class="table table-borderless table-sm">
                     <tr>
                         <td><strong>Username:</strong></td>
-                        <td>{{ user.username }}</td>
+                        <td>{{ user.get('username', user.get('email', 'No username')) }}</td>
                     </tr>
                     <tr>
                         <td><strong>Department:</strong></td>
@@ -60,18 +60,18 @@
                     <tr>
                         <td><strong>Status:</strong></td>
                         <td>
-                            <span class="badge bg-{{ 'success' if user.is_active else 'danger' }}">
-                                {{ 'Active' if user.is_active else 'Inactive' }}
+                            <span class="badge bg-{{ 'success' if user.get('status', 'inactive') == 'active' else 'danger' }}">
+                                {{ 'Active' if user.get('status', 'inactive') == 'active' else 'Inactive' }}
                             </span>
                         </td>
                     </tr>
                     <tr>
                         <td><strong>Member since:</strong></td>
-                        <td>{{ user.created_at.strftime('%B %d, %Y') }}</td>
+                        <td>{{ user.get('created_at', 'Unknown') }}</td>
                     </tr>
                     <tr>
                         <td><strong>Last login:</strong></td>
-                        <td>{{ user.last_login.strftime('%m/%d/%Y %H:%M') if user.last_login else 'Never' }}</td>
+                        <td>Never</td>
                     </tr>
                 </table>
             </div>
@@ -136,7 +136,7 @@
             <div class="card-header">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-key me-2"></i>Change Password
-                    {% if user.password_reset_required %}
+                    {% if user.get('password_reset_required', False) %}
                     <span class="badge bg-warning ms-2">Required</span>
                     {% endif %}
                 </h5>
@@ -241,13 +241,13 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label">First Name</label>
-                            <input type="text" class="form-control" value="{{ user.first_name }}" readonly>
+                            <input type="text" class="form-control" value="{{ user.get('name', 'Unknown').split(' ')[0] if user.get('name') else 'Unknown' }}" readonly>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label">Last Name</label>
-                            <input type="text" class="form-control" value="{{ user.last_name }}" readonly>
+                            <input type="text" class="form-control" value="{{ user.get('name', 'Unknown').split(' ')[-1] if user.get('name') and ' ' in user.get('name', '') else 'Unknown' }}" readonly>
                         </div>
                     </div>
                 </div>
@@ -256,13 +256,13 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label">Username</label>
-                            <input type="text" class="form-control" value="{{ user.username }}" readonly>
+                            <input type="text" class="form-control" value="{{ user.get('username', user.get('email', 'No username')) }}" readonly>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label">Email</label>
-                            <input type="email" class="form-control" value="{{ user.email }}" readonly>
+                            <input type="email" class="form-control" value="{{ user.get('email', 'No email') }}" readonly>
                         </div>
                     </div>
                 </div>
@@ -271,7 +271,7 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label class="form-label">Role</label>
-                            <input type="text" class="form-control" value="{{ user.role.title() }}" readonly>
+                            <input type="text" class="form-control" value="{{ user.get('role', 'Unknown').replace('_', ' ').title() }}" readonly>
                         </div>
                     </div>
                     <div class="col-md-6">

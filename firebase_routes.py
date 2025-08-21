@@ -843,7 +843,14 @@ def reports():
 def profile():
     """User profile page"""
     user = get_current_user()
-    return render_template('profile.html', user=user)
+    if not user:
+        flash('User session not found. Please log in again.', 'error')
+        return redirect(url_for('landing'))
+    
+    # Get user notifications
+    notifications = [n for n in DATA_STORE.get('notifications', []) if n.get('user_id') == user['id']]
+    
+    return render_template('profile.html', user=user, notifications=notifications)
 
 @app.route('/document-requests')
 @login_required
