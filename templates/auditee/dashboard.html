@@ -137,7 +137,7 @@
                                             </td>
                                             <td>{{ audit.get('auditor_name', 'Not assigned') }}</td>
                                             <td>
-                                                <a href="{{ url_for('corrective_actions') }}?audit_id={{ audit.id }}" class="btn btn-primary btn-sm">
+                                                <a href="/corrective-actions?audit_id={{ audit.id }}" class="btn btn-primary btn-sm">
                                                     <i class="fas fa-reply mr-1"></i> Respond
                                                 </a>
                                             </td>
@@ -165,16 +165,16 @@
                     </div>
                     <div class="card-body">
                         <div class="list-group list-group-flush">
-                            <a href="{{ url_for('corrective_actions') }}" class="list-group-item list-group-item-action">
+                            <a href="/corrective-actions" class="list-group-item list-group-item-action">
                                 <i class="fas fa-tasks mr-3"></i> My Corrective Actions
                                 {% if stats.pending_actions > 0 %}
                                     <span class="badge bg-warning float-end">{{ stats.pending_actions }}</span>
                                 {% endif %}
                             </a>
-                            <a href="{{ url_for('document_requests') }}" class="list-group-item list-group-item-action">
+                            <a href="/document-requests" class="list-group-item list-group-item-action">
                                 <i class="fas fa-file-alt mr-3"></i> Document Requests
                             </a>
-                            <a href="{{ url_for('upload_evidence') }}" class="list-group-item list-group-item-action">
+                            <a href="/upload-evidence-page" class="list-group-item list-group-item-action">
                                 <i class="fas fa-upload mr-3"></i> Upload Evidence
                             </a>
                             <a href="{{ url_for('messages') }}" class="list-group-item list-group-item-action">
@@ -183,7 +183,7 @@
                                     <span class="badge bg-danger float-end">{{ stats.unread_messages }}</span>
                                 {% endif %}
                             </a>
-                            <a href="{{ url_for('auditee_reports') }}" class="list-group-item list-group-item-action">
+                            <a href="/auditee-reports" class="list-group-item list-group-item-action">
                                 <i class="fas fa-chart-line mr-3"></i> My Reports
                             </a>
                         </div>
@@ -254,7 +254,7 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <a href="{{ url_for('corrective_actions') }}?action_id={{ action.id }}" class="btn btn-primary btn-sm">
+                                                <a href="/corrective-actions?action_id={{ action.id }}" class="btn btn-primary btn-sm">
                                                     <i class="fas fa-edit mr-1"></i> Update
                                                 </a>
                                             </td>

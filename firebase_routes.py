@@ -651,7 +651,7 @@ def generate_audit_report(audit_id):
 @role_required('director', 'head_of_business_control', 'auditor')
 def report_library():
     """Central report library"""
-    reports = list(DATA_STORE['reports'].values())
+    reports = list(DATA_STORE['audit_reports'].values())
     audits = list(DATA_STORE['audits'].values())
     
     # Create audit lookup for report details
@@ -791,4 +791,79 @@ def not_found(error):
 
 @app.errorhandler(500)
 def internal_error(error):
-    return render_template('500.html'), 500
+    return render_template('500.html'), 500# Missing routes to be added to firebase_routes.py
+
+@app.route('/audit-execution')
+@login_required
+@role_required('auditor', 'head_of_business_control', 'director')
+def audit_execution():
+    """Audit execution page"""
+    audits = list(DATA_STORE['audits'].values())
+    return render_template('auditor/audits.html', audits=audits)
+
+@app.route('/findings')
+@login_required
+@role_required('auditor', 'auditee', 'director')
+def findings():
+    """Findings page"""
+    findings = list(DATA_STORE['findings'].values())
+    return render_template('auditor/findings.html', findings=findings)
+
+@app.route('/corrective-actions')
+@login_required
+@role_required('auditee')
+def corrective_actions():
+    """Corrective actions page"""
+    actions = list(DATA_STORE['corrective_actions'].values())
+    return render_template('auditee/corrective_actions.html', actions=actions)
+
+@app.route('/evidence-management')
+@login_required
+@role_required('auditor', 'auditee', 'director')
+def evidence_management():
+    """Evidence management page"""
+    evidence = list(DATA_STORE['evidence_files'].values())
+    return render_template('auditee/evidence.html', evidence=evidence)
+
+@app.route('/audit-reports')
+@login_required
+def audit_reports():
+    """Audit reports page"""
+    reports = list(DATA_STORE['audit_reports'].values())
+    return render_template('auditor/reports.html', reports=reports)
+
+@app.route('/reports')
+@login_required
+def reports():
+    """Reports library alias"""
+    return report_library()
+
+@app.route('/profile')
+@login_required
+def profile():
+    """User profile page"""
+    user = get_current_user()
+    return render_template('profile.html', user=user)
+
+@app.route('/document-requests')
+@login_required
+@role_required('auditee')
+def document_requests():
+    """Document requests page"""
+    requests = []
+    return render_template('auditee/document_requests.html', requests=requests)
+
+@app.route('/upload-evidence-page')
+@login_required
+@role_required('auditee')
+def upload_evidence_page():
+    """Evidence upload page"""
+    return render_template('auditee/upload_evidence.html')
+
+@app.route('/auditee-reports')
+@login_required
+@role_required('auditee')
+def auditee_reports():
+    """Auditee reports page"""
+    reports = list(DATA_STORE['audit_reports'].values())
+    return render_template('auditee/reports.html', reports=reports)
