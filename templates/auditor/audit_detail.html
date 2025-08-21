@@ -52,12 +52,12 @@
                                 {{ audit.priority.title() }}
                             </span>
                         </p>
-                        <p><strong>Department:</strong> {{ audit.department.name if audit.department else 'Not assigned' }}</p>
-                        <p><strong>Auditee:</strong> {{ audit.auditee.full_name if audit.auditee else 'Not assigned' }}</p>
+                        <p><strong>Department:</strong> {{ audit.department if audit.department else 'Not assigned' }}</p>
+                        <p><strong>Auditee:</strong> {{ audit.auditee_name if audit.auditee_name else 'Not assigned' }}</p>
                     </div>
                     <div class="col-md-6">
-                        <p><strong>Planned Start:</strong> {{ audit.planned_start_date.strftime('%B %d, %Y') }}</p>
-                        <p><strong>Planned End:</strong> {{ audit.planned_end_date.strftime('%B %d, %Y') }}</p>
+                        <p><strong>Planned Start:</strong> {{ audit.start_date.strftime('%B %d, %Y') if audit.start_date else 'Not set' }}</p>
+                        <p><strong>Planned End:</strong> {{ audit.end_date.strftime('%B %d, %Y') if audit.end_date else 'Not set' }}</p>
                         {% if audit.actual_start_date %}
                         <p><strong>Actual Start:</strong> {{ audit.actual_start_date.strftime('%B %d, %Y') }}</p>
                         {% endif %}
@@ -90,7 +90,7 @@
                         <strong>{{ findings_count }}</strong>
                     </div>
                     <div class="progress mt-1" style="height: 5px;">
-                        <div class="progress-bar bg-success" style="width: {{ (resolved_findings/findings_count*100)|round if findings_count > 0 else 0 }}%"></div>
+                        <div class="progress-bar bg-success" style="width: {{ ((resolved_findings/findings_count*100)|round) if findings_count > 0 else 0 }}%"></div>
                     </div>
                 </div>
                 

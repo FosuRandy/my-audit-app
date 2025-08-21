@@ -25,12 +25,12 @@
                             <tbody>
                                 {% for user in users %}
                                 <tr>
-                                    <td>{{ user.name }}</td>
+                                    <td>{{ user.get('first_name', '') + ' ' + user.get('last_name', '') }}</td>
                                     <td>{{ user.email }}</td>
                                     <td><span class="badge bg-info">{{ user.role.title().replace('_', ' ') }}</span></td>
                                     <td>
-                                        <span class="badge bg-{{ 'success' if user.status == 'active' else 'danger' }}">
-                                            {{ user.status.title() }}
+                                        <span class="badge bg-{{ 'success' if user.get('is_active', True) else 'danger' }}">
+                                            {{ 'Active' if user.get('is_active', True) else 'Inactive' }}
                                         </span>
                                     </td>
                                     <td>
