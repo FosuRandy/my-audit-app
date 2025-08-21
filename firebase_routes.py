@@ -1066,12 +1066,19 @@ def toggle_user_status(user_id):
 
 @app.route('/users/<user_id>/delete', methods=['POST'])
 @login_required
-@role_required('director')
+@role_required('director', 'head_of_business_control')
 def delete_user(user_id):
     """Delete user"""
-    if user_id in DATA_STORE['users']:
-        del DATA_STORE['users'][user_id]
-        flash('User deleted successfully.', 'success')
+    try:
+        user = DATA_STORE['users'].get(user_id)
+        if user:
+            del DATA_STORE['users'][user_id]
+            log_audit_action('delete_user', 'user', user_id, f'User deleted: {user.get("email")}')
+            flash('User deleted successfully.', 'success')
+        else:
+            flash('User not found.', 'error')
+    except Exception as e:
+        flash(f'Error deleting user: {str(e)}', 'error')
     return redirect(url_for('users'))
 
 @app.route('/departments/create', methods=['GET', 'POST'])
@@ -1100,9 +1107,26 @@ def create_new_department():
 
 @app.route('/departments/<department_id>/delete', methods=['POST'])
 @login_required
-@role_required('director')
+@role_required('director', 'head_of_business_control')
 def delete_department(department_id):
     """Delete department"""
+    try:
+        department = DATA_STORE['departments'].get(department_id)
+        if department:
+            # Check if department has users
+            dept_users = [u for u in DATA_STORE['users'].values() if u.get('department_id') == department_id]
+            if dept_users:
+                flash(f'Cannot delete department with {len(dept_users)} assigned users. Please reassign users first.', 'error')
+                return redirect(url_for('departments'))
+            
+            del DATA_STORE['departments'][department_id]
+            log_audit_action('delete_department', 'department', department_id, f'Department deleted: {department.get("name")}')
+            flash('Department deleted successfully.', 'success')
+        else:
+            flash('Department not found.', 'error')
+    except Exception as e:
+        flash(f'Error deleting department: {str(e)}', 'error')
+    return redirect(url_for('departments'))
     try:
         if department_id in DATA_STORE['departments']:
             # Check if department has users
@@ -1259,11 +1283,43 @@ def create_audit():
     """Create new audit"""
     return render_template('audits/create.html')
 
-@app.route('/reports/generate')
+@app.route('/reports/generate', methods=['GET', 'POST'])
 @login_required
 def generate_report():
     """Generate report page"""
-    return render_template('reports/generate.html')
+    if request.method == 'POST':
+        # Handle report generation
+        report_type = request.form.get('report_type')
+        audit_id = request.form.get('audit_id')
+        
+        try:
+            # Generate report logic here
+            new_report = {
+                'id': str(uuid4()),
+                'type': report_type,
+                'audit_id': audit_id,
+                'generated_by': get_current_user()['id'],
+                'generated_at': datetime.now().isoformat(),
+                'title': f'{report_type.title()} Report',
+                'status': 'completed'
+            }
+            
+            DATA_STORE['audit_reports'][new_report['id']] = new_report
+            flash('Report generated successfully.', 'success')
+            return redirect(url_for('view_report', report_id=new_report['id']))
+            
+        except Exception as e:
+            flash(f'Error generating report: {str(e)}', 'error')
+    
+    # Get audits for report selection
+    audits = list(DATA_STORE['audits'].values())
+    user = get_current_user()
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    return render_template('reports/generate.html', 
+                         audits=audits,
+                         current_user=user,
+                         notifications=notifications)
 
 @app.route('/reports/<report_id>')
 @login_required

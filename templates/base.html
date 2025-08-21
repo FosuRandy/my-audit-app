@@ -99,24 +99,44 @@
                         </ul>
                     </li>
                     
-                    <!-- User Menu -->
+                    <!-- Enhanced User Profile Dropdown with Notifications -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user me-1"></i>{{ current_user.get('first_name', '') + ' ' + current_user.get('last_name', '') if current_user.get('first_name') else current_user.get('name', current_user.get('email', 'User')) }}
-                            <span class="badge bg-{{ 'success' if current_user.get('role') == 'director' else 'primary' if current_user.get('role') == 'head_of_business_control' else 'warning' if current_user.get('role') == 'auditor' else 'info' if current_user.get('role') == 'auditee' else 'secondary' }} ms-1">
-                                {{ (current_user.get('role', 'user').replace('_', ' ')).title() }}
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-2"></i>
+                            <span class="me-1">
+                                {{ current_user.get('first_name', '') + ' ' + current_user.get('last_name', '') if current_user.get('first_name') else current_user.get('name', current_user.get('email', 'User')) }}
                             </span>
+                            <span class="badge bg-{{ 'success' if current_user.get('role') == 'director' else 'primary' if current_user.get('role') == 'head_of_business_control' else 'warning' if current_user.get('role') == 'auditor' else 'info' if current_user.get('role') == 'auditee' else 'secondary' }} ms-1">
+                                {{ 'Director' if current_user.get('role') == 'director' else (current_user.get('role', 'user').replace('_', ' ')).title() }}
+                            </span>
+                            {% if notifications and notifications|length > 0 %}
+                                <span class="badge bg-danger rounded-pill ms-1">{{ notifications|length }}</span>
+                            {% endif %}
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ url_for('user_profile') }}">
-                                <i class="fas fa-user-circle me-1"></i>Profile
+                        <ul class="dropdown-menu dropdown-menu-end" style="min-width: 320px;">
+                            <li><h6 class="dropdown-header">Account</h6></li>
+                            <li><a class="dropdown-item" href="{{ url_for('user_profile') if url_for('user_profile') else url_for('profile') }}">
+                                <i class="fas fa-user-circle me-2"></i>Profile
                             </a></li>
                             <li><a class="dropdown-item" href="{{ url_for('change_password') }}">
-                                <i class="fas fa-key me-1"></i>Change Password
+                                <i class="fas fa-key me-2"></i>Change Password
                             </a></li>
+                            {% if notifications and notifications|length > 0 %}
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/logout">
-                                <i class="fas fa-sign-out-alt me-1"></i>Logout
+                            <li><h6 class="dropdown-header">Recent Notifications ({{ notifications|length }})</h6></li>
+                            {% for notification in notifications[:5] %}
+                            <li><a class="dropdown-item small text-muted" href="#" style="white-space: normal; max-width: 300px;">
+                                <i class="fas fa-bell me-2 text-primary"></i>{{ notification.get('message', '')[:60] }}{% if notification.get('message', '')|length > 60 %}...{% endif %}
+                                <br><small class="text-muted">{{ notification.get('created_at', '')[:10] }}</small>
+                            </a></li>
+                            {% endfor %}
+                            {% if notifications|length > 5 %}
+                            <li><a class="dropdown-item text-primary small text-center" href="{{ url_for('profile') }}">View all {{ notifications|length }} notifications</a></li>
+                            {% endif %}
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
                             </a></li>
                         </ul>
                     </li>
