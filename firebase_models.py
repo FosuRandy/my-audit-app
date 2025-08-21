@@ -287,3 +287,21 @@ class ReportModel(FirebaseModel):
         report_data['report_number'] = f"RPT-{str(uuid.uuid4())[:8].upper()}"
         
         return self.create(report_data)
+
+class AuditLogModel(FirebaseModel):
+    """Audit logging for tracking user actions"""
+    
+    def __init__(self):
+        super().__init__('audit_logs')
+    
+    def log_action(self, log_data):
+        """Log user action"""
+        required_fields = ['user_id', 'action', 'entity_type']
+        for field in required_fields:
+            if field not in log_data:
+                raise ValueError(f"Missing required field: {field}")
+        
+        log_data['timestamp'] = datetime.now()
+        log_data['session_id'] = log_data.get('session_id', 'unknown')
+        
+        return self.create(log_data)

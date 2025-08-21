@@ -4,6 +4,7 @@ from app import app
 from firebase_auth import login_required, role_required, get_current_user, log_audit_action, check_password_reset_required
 from firebase_config import authenticate_user, create_user_account, get_user_info
 from data_store import DATA_STORE, find_user_by_email, initialize_sample_data
+from firebase_models import UserModel, DepartmentModel, AuditModel, RiskAssessmentModel, FindingModel, CorrectiveActionModel, MessageModel, EvidenceModel, ReportModel, AuditLogModel
 # Import utilities - will create these functions if needed
 import secrets
 import string
@@ -28,22 +29,46 @@ from datetime import datetime, timedelta
 import os
 import uuid
 import json
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter, A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib import colors
-from reportlab.lib.units import inch
+# Try importing reportlab with fallback
+try:
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+    from reportlab.lib import colors
+    from reportlab.lib.units import inch
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    print("ReportLab not available, PDF generation disabled")
+    REPORTLAB_AVAILABLE = False
 import io
 
 # Initialize sample data on first import
 initialize_sample_data()
 
+# Initialize model instances
+user_model = UserModel()
+dept_model = DepartmentModel() 
+audit_model = AuditModel()
+risk_model = RiskAssessmentModel()
+finding_model = FindingModel()
+action_model = CorrectiveActionModel()
+message_model = MessageModel()
+evidence_model = EvidenceModel()
+report_model = ReportModel()
+audit_log_model = AuditLogModel()
+
 @app.route('/')
 def landing():
     """Landing page with role-based login options"""
     if 'user_id' in session:
-        return redirect(url_for('dashboard'))
+        # Check if user actually exists before redirecting
+        user = get_current_user()
+        if user:
+            return redirect(url_for('dashboard'))
+        else:
+            # Clear invalid session
+            session.clear()
     return render_template('landing.html')
 
 @app.route('/login/<role>')
@@ -112,6 +137,8 @@ def dashboard():
     """Role-based dashboard"""
     user = get_current_user()
     if not user:
+        session.clear()  # Clear invalid session
+        flash('Please log in to access the dashboard.', 'warning')
         return redirect(url_for('landing'))
     
     role = user.get('role')
@@ -126,6 +153,7 @@ def dashboard():
         return auditee_dashboard()
     else:
         flash('Invalid role.', 'error')
+        session.clear()  # Clear invalid session
         return redirect(url_for('landing'))
 
 @app.route('/director_dashboard')
