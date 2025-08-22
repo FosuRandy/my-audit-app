@@ -13,31 +13,31 @@
                 </h6>
                 <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a class="nav-link active" href="#overview">
+                        <a class="nav-link active" href="{{ url_for('director_dashboard') }}">
                             <i class="fas fa-tachometer-alt me-2"></i>
                             Overview
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#risk-assessment">
+                        <a class="nav-link" href="{{ url_for('risk_assessment') }}">
                             <i class="fas fa-chart-line me-2"></i>
                             Risk Assessment
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#audit-planning">
+                        <a class="nav-link" href="{{ url_for('audit_planning') }}">
                             <i class="fas fa-calendar-alt me-2"></i>
                             Audit Planning
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#plan-approval">
+                        <a class="nav-link" href="{{ url_for('director_dashboard') }}?tab=approval">
                             <i class="fas fa-check-circle me-2"></i>
                             Plan Approval
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#reporting">
+                        <a class="nav-link" href="{{ url_for('generate_report') }}">
                             <i class="fas fa-file-alt me-2"></i>
                             Reporting
                         </a>
@@ -49,7 +49,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#follow-up">
+                        <a class="nav-link" href="{{ url_for('director_dashboard') }}?tab=followup">
                             <i class="fas fa-clock me-2"></i>
                             Follow-Up
                         </a>

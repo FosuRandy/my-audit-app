@@ -186,7 +186,9 @@ def director_dashboard():
     
     # Get user notifications  
     user = get_current_user()
-    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    notifications = []
+    if user:
+        notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
     
     return render_template('director/dashboard.html', 
                          pending_audits=pending_audits,
@@ -235,7 +237,9 @@ def head_of_business_control_dashboard():
     
     # Get user notifications  
     user = get_current_user()
-    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    notifications = []
+    if user:
+        notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
     
     return render_template('head_of_business_control/dashboard.html',
                          draft_audits=draft_audits,
@@ -258,7 +262,7 @@ def auditor_dashboard():
     
     # Get audits assigned to this auditor
     assigned_audits = [audit for audit in DATA_STORE['audits'].values() 
-                      if audit.get('auditor_id') == user['id']]
+                      if audit.get('auditor_id') == user.get('id')]
     
     # Get findings for audits
     auditor_findings = [finding for finding in DATA_STORE['findings'].values() 
@@ -266,7 +270,7 @@ def auditor_dashboard():
     
     # Get messages
     auditor_messages = [msg for msg in DATA_STORE['messages'].values() 
-                       if msg.get('recipient_id') == user['id'] or msg.get('sender_id') == user['id']]
+                       if msg.get('recipient_id') == user.get('id') or msg.get('sender_id') == user.get('id')]
     
     # Get evidence files
     evidence_files = [evidence for evidence in DATA_STORE['evidence_files'].values() 
@@ -300,19 +304,19 @@ def auditee_dashboard():
     
     # Get audits where this user is auditee
     auditee_audits = [audit for audit in DATA_STORE['audits'].values() 
-                     if audit.get('auditee_id') == user['id']]
+                     if audit.get('auditee_id') == user.get('id')]
     
     # Get corrective actions assigned to this auditee
     my_actions = [action for action in DATA_STORE['corrective_actions'].values() 
-                 if action.get('responsible_person_id') == user['id']]
+                 if action.get('responsible_person_id') == user.get('id')]
     
     # Get messages for this auditee
     auditee_messages = [msg for msg in DATA_STORE['messages'].values() 
-                       if msg.get('recipient_id') == user['id']]
+                       if msg.get('recipient_id') == user.get('id')]
     
     # Get evidence files uploaded by this auditee
     my_evidence = [evidence for evidence in DATA_STORE['evidence_files'].values() 
-                  if evidence.get('uploaded_by') == user['id']]
+                  if evidence.get('uploaded_by') == user.get('id')]
     
     stats = {
         'active_audits': len([a for a in auditee_audits if a.get('status') in ['in_progress', 'review']]),
@@ -344,7 +348,16 @@ def risk_assessment():
     risks = list(DATA_STORE['risks'].values())
     departments = list(DATA_STORE['departments'].values())
     
-    return render_template('risk_assessment.html', risks=risks, departments=departments)
+    # Calculate risk statistics
+    risk_stats = {
+        'critical': len([r for r in risks if r.get('risk_level') == 'critical']),
+        'high': len([r for r in risks if r.get('risk_level') == 'high']), 
+        'medium': len([r for r in risks if r.get('risk_level') == 'medium']),
+        'low': len([r for r in risks if r.get('risk_level') == 'low']),
+        'total': len(risks)
+    }
+    
+    return render_template('risk_assessment.html', risks=risks, departments=departments, risk_stats=risk_stats)
 
 @app.route('/risk-assessment/create', methods=['GET', 'POST'])
 @login_required
@@ -360,7 +373,7 @@ def create_risk_assessment():
                 'likelihood_level': request.form['likelihood_level'],
                 'mitigation_measures': request.form.get('mitigation_measures', ''),
                 'risk_owner': request.form.get('risk_owner', ''),
-                'created_by': get_current_user()['id']
+                'created_by': get_current_user().get('id') if get_current_user() else None
             }
             
             risk_id = str(uuid.uuid4())
@@ -388,7 +401,16 @@ def audit_planning():
     risks = list(DATA_STORE['risks'].values())
     departments = list(DATA_STORE['departments'].values())
     
-    return render_template('audit_planning.html', audits=audits, risks=risks, departments=departments)
+    # Calculate planning statistics
+    planning_stats = {
+        'draft': len([a for a in audits if a.get('status') == 'draft']),
+        'pending': len([a for a in audits if a.get('status') == 'pending_director_approval']),
+        'approved': len([a for a in audits if a.get('status') == 'approved']),
+        'in_progress': len([a for a in audits if a.get('status') == 'in_progress']),
+        'total': len(audits)
+    }
+    
+    return render_template('audit_planning.html', audits=audits, risks=risks, departments=departments, planning_stats=planning_stats)
 
 @app.route('/audit-planning/create', methods=['GET', 'POST'])
 @login_required
@@ -543,6 +565,8 @@ def send_message():
         flash(f'Error sending message: {str(e)}', 'error')
     
     return redirect(url_for('messages'))
+
+# Report Generation Routes (removed duplicate - exists later in file)
 
 # Evidence Management Routes
 @app.route('/evidence/upload', methods=['POST'])
