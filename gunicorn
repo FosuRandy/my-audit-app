@@ -1,3 +1,0 @@
-#!/bin/bash
-# Simple gunicorn wrapper for Replit
-exec python main.py
