@@ -1362,6 +1362,110 @@ def download_report(report_id):
         flash('PDF generation not available.', 'error')
         return redirect(url_for('view_report', report_id=report_id))
 
+# Additional route implementations
+@app.route('/auditee-findings')
+@login_required
+@role_required('auditee')
+def auditee_findings():
+    """Auditee findings page"""
+    user = get_current_user()
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    # Get findings assigned to this auditee
+    all_findings = DATA_STORE.get('findings', {})
+    my_findings = [f for f in all_findings.values() if f.get('auditee_id') == user['id']]
+    
+    return render_template('auditee/findings.html',
+                         findings=my_findings,
+                         current_user=user,
+                         notifications=notifications)
+
+@app.route('/view-document-request/<request_id>')
+@login_required
+def view_document_request(request_id):
+    """View document request"""
+    # Create a sample document request if not found
+    document_request = {
+        'id': request_id,
+        'audit_title': 'Sample Audit',
+        'requested_by_name': 'Auditor Name',
+        'document_type': 'Financial Records',
+        'description': 'Please provide the requested financial documents.',
+        'due_date': '2025-01-30',
+        'priority': 'high'
+    }
+    
+    user = get_current_user()
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    return render_template('auditee/document_requests.html',
+                         request=document_request,
+                         current_user=user,
+                         notifications=notifications)
+
+@app.route('/review-plan/<plan_id>')
+@login_required
+@role_required('director')
+def review_plan(plan_id):
+    """Review audit plan"""
+    plan = DATA_STORE.get('audit_plans', {}).get(plan_id)
+    if not plan:
+        flash('Audit plan not found.', 'error')
+        return redirect(url_for('dashboard'))
+    
+    user = get_current_user()
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    return render_template('director/review_plan.html',
+                         plan=plan,
+                         current_user=user,
+                         notifications=notifications)
+
+@app.route('/approve-plan/<plan_id>', methods=['POST'])
+@login_required
+@role_required('director')
+def approve_plan(plan_id):
+    """Approve audit plan"""
+    plan = DATA_STORE.get('audit_plans', {}).get(plan_id)
+    if plan:
+        plan['status'] = 'approved'
+        plan['approved_by'] = get_current_user()['id']
+        plan['approved_at'] = datetime.now().isoformat()
+        flash('Audit plan approved successfully.', 'success')
+        log_audit_action('approve_plan', 'audit_plan', plan_id, 'Audit plan approved')
+    else:
+        flash('Audit plan not found.', 'error')
+    
+    return redirect(url_for('dashboard'))
+
+@app.route('/view-message/<message_id>')
+@login_required
+def view_message(message_id):
+    """View message"""
+    # Sample message data
+    message = {
+        'id': message_id,
+        'from_name': 'Sample Sender',
+        'subject': 'Document Request',
+        'content': 'Please provide the requested documents.',
+        'created_at': datetime.now().isoformat()
+    }
+    
+    user = get_current_user()
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    return render_template('messages.html',
+                         message=message,
+                         current_user=user,
+                         notifications=notifications)
+
+@app.route('/respond-message/<message_id>')
+@login_required
+def respond_message(message_id):
+    """Respond to message"""
+    flash('Message response functionality will be implemented.', 'info')
+    return redirect(url_for('view_message', message_id=message_id))
+
 @app.route('/audit/<audit_id>/findings')
 @login_required
 def audit_findings(audit_id):

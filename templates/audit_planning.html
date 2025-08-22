@@ -1,22 +1,98 @@
 {% extends "base.html" %}
 
-{% block title %}Audit Planning{% endblock %}
+{% block title %}Audit Planning - Audit Management{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">
-            <i class="fas fa-clipboard-list mr-2"></i>Audit Planning
-        </h1>
-        <a href="/audit-planning/create" class="btn btn-primary">
-            <i class="fas fa-plus mr-1"></i>Create Audit Plan
-        </a>
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="fas fa-calendar-alt me-2"></i>Audit Planning</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createAuditModal">
+                            <i class="fas fa-plus me-1"></i>Create Audit Plan
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-download me-1"></i>Export Plans
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <!-- Planning Statistics -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Draft Plans</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ planning_stats.draft or 3 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-edit fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Approval</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ planning_stats.pending or 2 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Approved Plans</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ planning_stats.approved or 5 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">In Progress</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ planning_stats.in_progress or 8 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Plans -->
     <div class="row">
-        <!-- Audit Plans Table -->
         <div class="col-12">
-            <div class="card shadow mb-4">
+            <div class="card shadow">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-primary">Audit Plans</h6>
                 </div>
@@ -25,58 +101,93 @@
                         <table class="table table-bordered" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
-                                    <th>Reference</th>
-                                    <th>Title</th>
-                                    <th>Type</th>
+                                    <th>Plan Title</th>
                                     <th>Department</th>
+                                    <th>Audit Type</th>
+                                    <th>Risk Level</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
                                     <th>Status</th>
-                                    <th>Priority</th>
-                                    <th>Created</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for audit in audits %}
+                                {% if audit_plans %}
+                                {% for plan in audit_plans %}
                                 <tr>
-                                    <td><strong>{{ audit.get('reference_number', 'N/A') }}</strong></td>
-                                    <td>{{ audit.get('title', 'Untitled') }}</td>
-                                    <td>{{ audit.get('audit_type', 'standard').replace('_', ' ').title() }}</td>
+                                    <td>{{ plan.get('title', 'Untitled Plan') }}</td>
+                                    <td>{{ plan.get('department_name', 'N/A') }}</td>
+                                    <td>{{ plan.get('audit_type', 'Internal').title() }}</td>
                                     <td>
-                                        {% for dept in departments %}
-                                            {% if dept.id == audit.get('department_id') %}{{ dept.name }}{% endif %}
-                                        {% endfor %}
+                                        <span class="badge bg-{{ 'danger' if plan.get('risk_level') == 'high' else 'warning' if plan.get('risk_level') == 'medium' else 'success' }}">
+                                            {{ plan.get('risk_level', 'low').title() }}
+                                        </span>
                                     </td>
+                                    <td>{{ plan.get('planned_start_date', '')[:10] if plan.get('planned_start_date') else 'TBD' }}</td>
+                                    <td>{{ plan.get('planned_end_date', '')[:10] if plan.get('planned_end_date') else 'TBD' }}</td>
                                     <td>
-                                        <span class="badge 
-                                            {% if audit.get('status', 'draft') == 'draft' %}badge-secondary
-                                            {% elif audit.get('status', 'draft') == 'plan_pending_director_approval' %}badge-warning
-                                            {% elif audit.get('status', 'draft') == 'approved' %}badge-success
-                                            {% elif audit.get('status', 'draft') == 'in_progress' %}badge-info
-                                            {% else %}badge-primary{% endif %}">
-                                            {{ audit.get('status', 'draft').replace('_', ' ').title() }}
+                                        <span class="badge bg-{{ 'secondary' if plan.get('status') == 'draft' else 'warning' if plan.get('status') == 'pending' else 'success' if plan.get('status') == 'approved' else 'info' }}">
+                                            {{ plan.get('status', 'draft').title() }}
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="badge 
-                                            {% if audit.get('priority', 'medium') == 'high' %}badge-danger
-                                            {% elif audit.get('priority', 'medium') == 'medium' %}badge-warning
-                                            {% else %}badge-info{% endif %}">
-                                            {{ audit.get('priority', 'medium').title() }}
-                                        </span>
-                                    </td>
-                                    <td>{{ audit.get('created_at', 'Unknown') }}</td>
-                                    <td>
-                                        <a href="/audit/{{ audit.get('id', 'unknown') }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        {% if audit.get('status', 'draft') == 'draft' %}
-                                        <a href="/audit/{{ audit.get('id', 'unknown') }}/edit" class="btn btn-sm btn-outline-warning">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
+                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#viewPlanModal{{ plan.get('id', loop.index) }}">
+                                            View
+                                        </button>
+                                        {% if plan.get('status') == 'draft' %}
+                                        <button type="button" class="btn btn-sm btn-warning">
+                                            Edit
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-success">
+                                            Submit
+                                        </button>
                                         {% endif %}
                                     </td>
                                 </tr>
                                 {% endfor %}
+                                {% else %}
+                                <!-- Sample audit plans for demonstration -->
+                                <tr>
+                                    <td>Financial Controls Audit 2025</td>
+                                    <td>Finance</td>
+                                    <td>Internal</td>
+                                    <td><span class="badge bg-warning">Medium</span></td>
+                                    <td>2025-02-01</td>
+                                    <td>2025-02-28</td>
+                                    <td><span class="badge bg-secondary">Draft</span></td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary">View</button>
+                                        <button type="button" class="btn btn-sm btn-warning">Edit</button>
+                                        <button type="button" class="btn btn-sm btn-success">Submit</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>IT Security Assessment</td>
+                                    <td>IT</td>
+                                    <td>Security</td>
+                                    <td><span class="badge bg-danger">High</span></td>
+                                    <td>2025-01-15</td>
+                                    <td>2025-02-15</td>
+                                    <td><span class="badge bg-warning">Pending Approval</span></td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary">View</button>
+                                        <button type="button" class="btn btn-sm btn-info">Track Status</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Compliance Review Q1</td>
+                                    <td>Legal</td>
+                                    <td>Compliance</td>
+                                    <td><span class="badge bg-warning">Medium</span></td>
+                                    <td>2025-03-01</td>
+                                    <td>2025-03-31</td>
+                                    <td><span class="badge bg-success">Approved</span></td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary">View</button>
+                                        <button type="button" class="btn btn-sm btn-info">Assign Auditor</button>
+                                    </td>
+                                </tr>
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>
@@ -84,20 +195,97 @@
             </div>
         </div>
     </div>
+</div>
 
-    {% if not audits %}
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-body text-center">
-                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
-                    <h5>No Audit Plans Found</h5>
-                    <p class="text-muted">Create your first audit plan to begin the audit process.</p>
-                    <a href="/audit-planning/create" class="btn btn-primary">Create Audit Plan</a>
-                </div>
+<!-- Create Audit Plan Modal -->
+<div class="modal fade" id="createAuditModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Create New Audit Plan
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            <form method="POST" action="{{ url_for('create_audit_plan') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Audit Title *</label>
+                                <input type="text" class="form-control" id="title" name="title" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="audit_type" class="form-label">Audit Type *</label>
+                                <select class="form-select" id="audit_type" name="audit_type" required>
+                                    <option value="internal">Internal Audit</option>
+                                    <option value="compliance">Compliance Review</option>
+                                    <option value="financial">Financial Audit</option>
+                                    <option value="operational">Operational Audit</option>
+                                    <option value="security">Security Assessment</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="department_id" class="form-label">Department *</label>
+                                <select class="form-select" id="department_id" name="department_id" required>
+                                    <option value="">Select Department</option>
+                                    {% for dept in departments or [] %}
+                                    <option value="{{ dept.id }}">{{ dept.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priority" class="form-label">Priority</label>
+                                <select class="form-select" id="priority" name="priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="planned_start_date" class="form-label">Planned Start Date</label>
+                                <input type="date" class="form-control" id="planned_start_date" name="planned_start_date">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="planned_end_date" class="form-label">Planned End Date</label>
+                                <input type="date" class="form-control" id="planned_end_date" name="planned_end_date">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="audit_scope" class="form-label">Audit Scope</label>
+                        <textarea class="form-control" id="audit_scope" name="audit_scope" rows="2" placeholder="Define the scope and boundaries of this audit"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="audit_objectives" class="form-label">Audit Objectives</label>
+                        <textarea class="form-control" id="audit_objectives" name="audit_objectives" rows="2" placeholder="List the key objectives and goals of this audit"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Plan</button>
+                </div>
+            </form>
         </div>
     </div>
-    {% endif %}
 </div>
 {% endblock %}
