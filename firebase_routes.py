@@ -1540,3 +1540,5 @@ def admin_delete_all_notifications():
     DATA_STORE['notifications'] = []
     flash('All notifications deleted.', 'success')
     return redirect(request.referrer or url_for('dashboard'))
+
+# Note: All necessary routes are already defined above

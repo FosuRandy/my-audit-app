@@ -65,5 +65,5 @@ def init_firebase():
     except Exception as e:
         logging.error(f"Error initializing Firebase data: {str(e)}")
 
-# Initialize Firebase data when app starts
+# Note: Firebase/data_store backend is being used instead of SQLAlchemy
 # Sample data will be initialized by data_store.py automatically
