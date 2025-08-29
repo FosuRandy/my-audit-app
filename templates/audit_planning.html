@@ -131,16 +131,18 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#viewPlanModal{{ plan.get('id', loop.index) }}">
+                                        <a href="{{ url_for('audit_detail', audit_id=plan.get('id')) }}" class="btn btn-sm btn-primary">
                                             View
-                                        </button>
+                                        </a>
                                         {% if plan.get('status') == 'draft' %}
-                                        <button type="button" class="btn btn-sm btn-warning">
+                                        <a href="{{ url_for('edit_audit', audit_id=plan.get('id')) }}" class="btn btn-sm btn-warning">
                                             Edit
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-success">
-                                            Submit
-                                        </button>
+                                        </a>
+                                        <form method="POST" action="{{ url_for('submit_audit_for_approval', audit_id=plan.get('id')) }}" style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Submit this plan for approval?')">
+                                                Submit
+                                            </button>
+                                        </form>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -156,9 +158,11 @@
                                     <td>2025-02-28</td>
                                     <td><span class="badge bg-secondary">Draft</span></td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-primary">View</button>
-                                        <button type="button" class="btn btn-sm btn-warning">Edit</button>
-                                        <button type="button" class="btn btn-sm btn-success">Submit</button>
+                                        <button type="button" class="btn btn-sm btn-primary" onclick="window.location.href='{{ url_for('audit_detail', audit_id='1') }}'">View</button>
+                                        <button type="button" class="btn btn-sm btn-warning" onclick="window.location.href='{{ url_for('edit_audit', audit_id='1') }}'">Edit</button>
+                                        <form method="POST" action="{{ url_for('submit_audit_for_approval', audit_id='1') }}" style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Submit this plan for approval?')">Submit</button>
+                                        </form>
                                     </td>
                                 </tr>
                                 <tr>
@@ -170,8 +174,8 @@
                                     <td>2025-02-15</td>
                                     <td><span class="badge bg-warning">Pending Approval</span></td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-primary">View</button>
-                                        <button type="button" class="btn btn-sm btn-info">Track Status</button>
+                                        <button type="button" class="btn btn-sm btn-primary" onclick="window.location.href='{{ url_for('audit_detail', audit_id='2') }}'">View</button>
+                                        <button type="button" class="btn btn-sm btn-info" onclick="showTrackingModal('2', 'Pending Approval')">Track Status</button>
                                     </td>
                                 </tr>
                                 <tr>
@@ -183,8 +187,8 @@
                                     <td>2025-03-31</td>
                                     <td><span class="badge bg-success">Approved</span></td>
                                     <td>
-                                        <button type="button" class="btn btn-sm btn-primary">View</button>
-                                        <button type="button" class="btn btn-sm btn-info">Assign Auditor</button>
+                                        <button type="button" class="btn btn-sm btn-primary" onclick="window.location.href='{{ url_for('audit_detail', audit_id='3') }}'">View</button>
+                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#assignAuditorModal">Assign Auditor</button>
                                     </td>
                                 </tr>
                                 {% endif %}
@@ -288,4 +292,174 @@
         </div>
     </div>
 </div>
+
+<!-- Track Status Modal -->
+<div class="modal fade" id="trackStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-line me-2"></i>Track Audit Status
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="progress mb-3">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: 30%" id="statusProgress">30%</div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <h6>Current Status: <span class="badge bg-warning" id="currentStatus">Pending Approval</span></h6>
+                        <p class="text-muted">Audit plan is awaiting director approval before execution can begin.</p>
+                        
+                        <div class="timeline mt-3">
+                            <div class="timeline-item completed">
+                                <i class="fas fa-check-circle text-success"></i>
+                                <span>Plan Created</span>
+                            </div>
+                            <div class="timeline-item completed">
+                                <i class="fas fa-edit text-success"></i>
+                                <span>Plan Submitted</span>
+                            </div>
+                            <div class="timeline-item active">
+                                <i class="fas fa-clock text-warning"></i>
+                                <span>Pending Approval</span>
+                            </div>
+                            <div class="timeline-item">
+                                <i class="fas fa-play-circle text-muted"></i>
+                                <span>Execution</span>
+                            </div>
+                            <div class="timeline-item">
+                                <i class="fas fa-flag-checkered text-muted"></i>
+                                <span>Completed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Auditor Modal -->
+<div class="modal fade" id="assignAuditorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-tie me-2"></i>Assign Auditor
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('assign_auditor', audit_id='3') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="auditor_id" class="form-label">Select Auditor</label>
+                        <select class="form-select" id="auditor_id" name="auditor_id" required>
+                            <option value="">Choose an auditor...</option>
+                            <option value="auditor1">John Smith - Senior Auditor</option>
+                            <option value="auditor2">Sarah Johnson - Lead Auditor</option>
+                            <option value="auditor3">Mike Wilson - Compliance Auditor</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="auditee_id" class="form-label">Select Auditee</label>
+                        <select class="form-select" id="auditee_id" name="auditee_id" required>
+                            <option value="">Choose an auditee...</option>
+                            <option value="auditee1">Lisa Brown - Legal Manager</option>
+                            <option value="auditee2">David Lee - Compliance Officer</option>
+                            <option value="auditee3">Emma Davis - Department Head</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="assignment_notes" class="form-label">Assignment Notes</label>
+                        <textarea class="form-control" id="assignment_notes" name="assignment_notes" rows="3" placeholder="Additional instructions or notes for the audit team..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Assign</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function showTrackingModal(auditId, status) {
+    // Update modal content based on status
+    const modal = document.getElementById('trackStatusModal');
+    const statusElement = document.getElementById('currentStatus');
+    const progressBar = document.getElementById('statusProgress');
+    
+    statusElement.textContent = status;
+    
+    // Update progress based on status
+    let progress = 20;
+    let progressClass = 'bg-info';
+    
+    switch(status.toLowerCase()) {
+        case 'draft':
+            progress = 20;
+            progressClass = 'bg-secondary';
+            break;
+        case 'pending approval':
+            progress = 40;
+            progressClass = 'bg-warning';
+            break;
+        case 'approved':
+            progress = 60;
+            progressClass = 'bg-success';
+            break;
+        case 'in progress':
+            progress = 80;
+            progressClass = 'bg-info';
+            break;
+        case 'completed':
+            progress = 100;
+            progressClass = 'bg-success';
+            break;
+    }
+    
+    progressBar.style.width = progress + '%';
+    progressBar.textContent = progress + '%';
+    progressBar.className = 'progress-bar ' + progressClass;
+    
+    // Show modal
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+}
+</script>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 15px;
+    padding-left: 25px;
+}
+
+.timeline-item i {
+    position: absolute;
+    left: -10px;
+    top: 2px;
+}
+
+.timeline-item.completed span {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.timeline-item.active span {
+    color: #ffc107;
+    font-weight: 600;
+}
+</style>
 {% endblock %}
