@@ -112,11 +112,11 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% if audit_plans %}
-                                {% for plan in audit_plans %}
+                                {% if audits %}
+                                {% for plan in audits %}
                                 <tr>
                                     <td>{{ plan.get('title', 'Untitled Plan') }}</td>
-                                    <td>{{ plan.get('department_name', 'N/A') }}</td>
+                                    <td>{{ departments|selectattr('id', 'equalto', plan.get('department_id'))|map(attribute='name')|first or 'N/A' }}</td>
                                     <td>{{ plan.get('audit_type', 'Internal').title() }}</td>
                                     <td>
                                         <span class="badge bg-{{ 'danger' if plan.get('risk_level') == 'high' else 'warning' if plan.get('risk_level') == 'medium' else 'success' }}">

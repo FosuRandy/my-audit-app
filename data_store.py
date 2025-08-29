@@ -99,20 +99,48 @@ def initialize_sample_data():
         })
         DATA_STORE['users'][user_id] = user_data
     
-    # Create sample audit
-    audit_id = str(uuid.uuid4())
-    audit_data = {
-        'id': audit_id,
-        'title': 'Financial Controls Audit',
-        'description': 'Review of financial control processes',
-        'audit_type': 'financial',
-        'department_id': dept_ids[1] if dept_ids else None,
-        'status': 'draft',
-        'priority': 'medium',
-        'reference_number': f'AUD-2025-{str(uuid.uuid4())[:8].upper()}',
-        'created_at': datetime.utcnow()
-    }
-    DATA_STORE['audits'][audit_id] = audit_data
+    # Create sample audits
+    sample_audits = [
+        {
+            'title': 'Financial Controls Audit',
+            'description': 'Review of financial control processes',
+            'audit_type': 'financial',
+            'department_id': dept_ids[1] if dept_ids else None,
+            'status': 'draft',
+            'priority': 'medium',
+            'planned_start_date': '2025-02-01',
+            'planned_end_date': '2025-02-28'
+        },
+        {
+            'title': 'IT Security Assessment',
+            'description': 'Comprehensive security audit of IT systems',
+            'audit_type': 'security',
+            'department_id': dept_ids[2] if dept_ids else None,
+            'status': 'pending_director_approval',
+            'priority': 'high',
+            'planned_start_date': '2025-01-15',
+            'planned_end_date': '2025-02-15'
+        },
+        {
+            'title': 'Compliance Review Q1',
+            'description': 'Quarterly compliance review',
+            'audit_type': 'compliance',
+            'department_id': dept_ids[3] if dept_ids else None,
+            'status': 'approved',
+            'priority': 'medium',
+            'planned_start_date': '2025-03-01',
+            'planned_end_date': '2025-03-31'
+        }
+    ]
+    
+    for audit_data in sample_audits:
+        audit_id = str(uuid.uuid4())
+        audit_data.update({
+            'id': audit_id,
+            'reference_number': f'AUD-2025-{str(uuid.uuid4())[:8].upper()}',
+            'created_at': datetime.utcnow()
+        })
+        DATA_STORE['audits'][audit_id] = audit_data
     
     # Create sample risk assessment
     risk_id = str(uuid.uuid4())
