@@ -1,8 +1,9 @@
 from flask import session, request, redirect, url_for, flash
 from functools import wraps
-from models import User, AuditLog
-from app import db
+from data_store import DATA_STORE
+from datetime import datetime
 import logging
+import uuid
 
 def login_required(f):
     @wraps(f)
@@ -21,7 +22,7 @@ def role_required(*roles):
                 flash('Please log in to access this page.', 'warning')
                 return redirect(url_for('landing'))
             
-            user = User.query.get(session['user_id'])
+            user = DATA_STORE['users'].get(session['user_id'])
             
             # Map old role names to new ones for compatibility
             role_mapping = {
@@ -34,7 +35,7 @@ def role_required(*roles):
             for role in roles:
                 mapped_roles.append(role_mapping.get(role, role))
             
-            if not user or user.role not in mapped_roles:
+            if not user or user.get('role') not in mapped_roles:
                 flash('You do not have permission to access this page.', 'error')
                 return redirect(url_for('dashboard'))
             return f(*args, **kwargs)
@@ -43,8 +44,8 @@ def role_required(*roles):
 
 def get_current_user():
     if 'user_id' in session:
-        user = User.query.get(session['user_id'])
-        if user and user.is_active:
+        user = DATA_STORE['users'].get(session['user_id'])
+        if user and user.get('is_active', False):
             return user
     return None
 
@@ -53,22 +54,25 @@ def log_audit_action(action, entity_type, entity_id=None, details=None):
     try:
         user = get_current_user()
         if user:
-            audit_log = AuditLog()
-            audit_log.user_id = user.id
-            audit_log.action = action
-            audit_log.entity_type = entity_type
-            audit_log.entity_id = entity_id
-            audit_log.details = details
-            audit_log.ip_address = request.remote_addr
-            db.session.add(audit_log)
-            db.session.commit()
-            logging.info(f"Audit log created: {action} by {user.username}")
+            audit_log_id = str(uuid.uuid4())
+            audit_log = {
+                'id': audit_log_id,
+                'user_id': user.get('id'),
+                'action': action,
+                'entity_type': entity_type,
+                'entity_id': entity_id,
+                'details': details,
+                'ip_address': request.remote_addr,
+                'created_at': datetime.now()
+            }
+            DATA_STORE['audit_logs'][audit_log_id] = audit_log
+            logging.info(f"Audit log created: {action} by {user.get('username', 'unknown')}")
     except Exception as e:
         logging.error(f"Failed to create audit log: {str(e)}")
 
 def check_password_reset_required():
     """Check if current user needs to reset password"""
     user = get_current_user()
-    if user and user.password_reset_required:
+    if user and user.get('password_reset_required', False):
         return True
     return False
