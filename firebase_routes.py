@@ -975,7 +975,7 @@ def evidence_management():
 
 @app.route('/audit-reports')
 @login_required
-@role_required('auditor', 'director', 'head_of_business_control')
+@role_required('auditor', 'director', 'head_of_business_control') 
 def audit_reports():
     """Audit reports page - filter for current user if auditor"""
     user = get_current_user()
@@ -983,14 +983,20 @@ def audit_reports():
         flash('User session invalid. Please log in again.', 'error')
         return redirect(url_for('landing'))
     
-    reports = list(DATA_STORE['audit_reports'].values())
-    audits = list(DATA_STORE['audits'].values())
+    # Get all reports and audits
+    all_reports = list(DATA_STORE['audit_reports'].values())
+    all_audits = list(DATA_STORE['audits'].values())
     
-    # Filter reports for auditors based on their assigned audits
+    # Filter reports and audits based on user role  
     if user.get('role') == 'auditor':
-        assigned_audit_ids = [audit['id'] for audit in audits if audit.get('auditor_id') == user.get('id')]
-        reports = [report for report in reports if report.get('audit_id') in assigned_audit_ids]
-        audits = [audit for audit in audits if audit.get('auditor_id') == user.get('id')]
+        # For auditors: only show reports for audits they are assigned to
+        assigned_audit_ids = [audit['id'] for audit in all_audits if audit.get('auditor_id') == user.get('id')]
+        reports = [report for report in all_reports if report.get('audit_id') in assigned_audit_ids]
+        audits = [audit for audit in all_audits if audit.get('auditor_id') == user.get('id')]
+    else:
+        # For directors and heads of business control: show all reports
+        reports = all_reports
+        audits = all_audits
     
     # Get user notifications
     notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user.get('id')]
