@@ -1167,8 +1167,81 @@ def upload_evidence_page():
 @role_required('auditee')
 def auditee_reports():
     """Auditee reports page"""
-    reports = list(DATA_STORE['audit_reports'].values())
-    return render_template('auditee/reports.html', reports=reports)
+    user = get_current_user()
+    
+    # Get all reports and audits
+    all_reports = list(DATA_STORE.get('audit_reports', {}).values())
+    all_audits = list(DATA_STORE.get('audits', {}).values())
+    
+    # Filter reports for audits where this user is auditee
+    auditee_audit_ids = [audit['id'] for audit in all_audits if audit.get('auditee_id') == user.get('id')]
+    auditee_reports = [report for report in all_reports if report.get('audit_id') in auditee_audit_ids]
+    
+    # Return only real data - no synthetic reports
+    
+    # Get user notifications
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    return render_template('auditee/reports.html', 
+                         reports=auditee_reports,
+                         current_user=user,
+                         notifications=notifications)
+
+@app.route('/auditee-followup')
+@login_required
+@role_required('auditee')
+def auditee_followup():
+    """Auditee follow-up page"""
+    user = get_current_user()
+    
+    # Get auditee's audits and related follow-up items
+    auditee_audits = [audit for audit in DATA_STORE.get('audits', {}).values() 
+                     if audit.get('auditee_id') == user.get('id')]
+    
+    # Get corrective actions for follow-up tracking
+    my_actions = [action for action in DATA_STORE.get('corrective_actions', {}).values() 
+                 if action.get('responsible_person_id') == user.get('id')]
+    
+    # Get completed audits for follow-up review
+    completed_audits = [audit for audit in auditee_audits if audit.get('status') == 'completed']
+    
+    # Create follow-up items from completed audits and pending actions
+    followup_items = []
+    
+    # Add overdue corrective actions
+    from datetime import datetime
+    for action in my_actions:
+        if action.get('target_date') and action.get('status') != 'completed':
+            try:
+                target_date = datetime.fromisoformat(action['target_date'])
+                if target_date < datetime.now():
+                    followup_items.append({
+                        'id': f"overdue_action_{action['id']}",
+                        'type': 'overdue_action',
+                        'title': f"Overdue: {action.get('title', 'Corrective Action')}",
+                        'description': action.get('description', ''),
+                        'due_date': action.get('target_date'),
+                        'priority': 'high',
+                        'status': action.get('status', 'pending'),
+                        'related_audit': action.get('audit_title', 'Unknown Audit')
+                    })
+            except (ValueError, TypeError):
+                pass
+    
+    # Add follow-up reviews for completed audits - only if we have real follow-up data
+    # Note: Only adding items if they exist in the data store, no synthetic generation
+    
+    # Return only real follow-up data - no synthetic items
+    
+    # Get user notifications
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    return render_template('auditee/followup.html', 
+                         followup_items=followup_items,
+                         my_actions=my_actions,
+                         completed_audits=completed_audits,
+                         current_user=user,
+                         notifications=notifications)
 
 @app.route('/change-password', methods=['GET', 'POST'])
 @login_required
