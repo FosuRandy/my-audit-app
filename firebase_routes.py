@@ -313,7 +313,7 @@ def auditee_dashboard():
         return redirect(url_for('landing'))
         
     # Get audits where this user is auditee
-    auditee_audits = [audit for audit in DATA_STORE['audits'].values() 
+    auditee_audits = [audit for audit in DATA_STORE.get('audits', {}).values() 
                      if audit.get('auditee_id') == user.get('id')]
     
     # Get corrective actions assigned to this auditee
@@ -962,8 +962,56 @@ def findings():
 @role_required('auditee')
 def corrective_actions():
     """Corrective actions page"""
-    actions = list(DATA_STORE['corrective_actions'].values())
-    return render_template('auditee/corrective_actions.html', actions=actions)
+    user = get_current_user()
+    
+    # Get all corrective actions
+    all_actions = DATA_STORE.get('corrective_actions', {})
+    
+    # Filter corrective actions for this auditee (responsible person or auditee of related finding)
+    my_actions = []
+    for action in all_actions.values():
+        # Check if auditee is responsible person
+        if action.get('responsible_person_id') == user.get('id'):
+            my_actions.append(action)
+        # Or check if auditee is assigned to the related finding
+        elif action.get('finding_id'):
+            finding = DATA_STORE.get('findings', {}).get(action['finding_id'])
+            if finding and finding.get('auditee_id') == user.get('id'):
+                my_actions.append(action)
+    
+    # If no actions exist, create sample ones for demonstration
+    if not my_actions:
+        # Get auditee's findings to create sample corrective actions
+        my_findings = [f for f in DATA_STORE.get('findings', {}).values() 
+                      if f.get('auditee_id') == user.get('id')]
+        
+        if my_findings:
+            sample_actions = []
+            for finding in my_findings[:2]:  # Create samples for first 2 findings
+                sample_actions.extend([
+                    {
+                        'id': f"action_{finding['id']}_1",
+                        'finding_id': finding['id'],
+                        'title': f"Corrective Action for {finding.get('title', 'Finding')}",
+                        'description': f"Address and resolve the issue: {finding.get('description', '')[:100]}...",
+                        'status': 'pending',
+                        'priority': finding.get('severity', 'medium'),
+                        'responsible_person_id': user.get('id'),
+                        'responsible_person_name': f"{user.get('first_name', '')} {user.get('last_name', '')}".strip(),
+                        'target_date': '2025-02-28',
+                        'created_at': '2025-01-15T10:00:00',
+                        'audit_title': finding.get('audit_title', 'Unknown Audit')
+                    }
+                ])
+            my_actions = sample_actions
+    
+    # Get user notifications
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    return render_template('auditee/corrective_actions.html', 
+                         actions=my_actions,
+                         current_user=user,
+                         notifications=notifications)
 
 @app.route('/evidence-management')
 @login_required
@@ -1032,8 +1080,57 @@ def profile():
 @role_required('auditee')
 def document_requests():
     """Document requests page"""
-    requests = []
-    return render_template('auditee/document_requests.html', requests=requests)
+    user = get_current_user()
+    
+    # Get document requests from DATA_STORE
+    all_requests = DATA_STORE.get('document_requests', {})
+    
+    # Get audits where this user is auditee
+    auditee_audits = [audit for audit in DATA_STORE.get('audits', {}).values() 
+                     if audit.get('auditee_id') == user.get('id')]
+    auditee_audit_ids = [audit['id'] for audit in auditee_audits]
+    
+    # Filter document requests for auditee's audits
+    auditee_requests = [req for req in all_requests.values() 
+                       if req.get('audit_id') in auditee_audit_ids]
+    
+    # If no requests exist, create some sample ones for demonstration
+    if not auditee_requests and auditee_audits:
+        sample_requests = []
+        for audit in auditee_audits[:2]:  # Create samples for first 2 audits
+            sample_requests.extend([
+                {
+                    'id': f"req_{audit['id']}_1",
+                    'audit_id': audit['id'],
+                    'audit_title': audit.get('title', 'Unknown Audit'),
+                    'requested_by_name': 'System Auditor',
+                    'document_type': 'Financial Records',
+                    'description': f"Please provide financial records for {audit.get('title', 'audit')}",
+                    'priority': 'high',
+                    'due_date': '2025-01-30',
+                    'status': 'pending'
+                },
+                {
+                    'id': f"req_{audit['id']}_2", 
+                    'audit_id': audit['id'],
+                    'audit_title': audit.get('title', 'Unknown Audit'),
+                    'requested_by_name': 'System Auditor',
+                    'document_type': 'Policy Documents',
+                    'description': f"Please provide policy documents for {audit.get('title', 'audit')}",
+                    'priority': 'medium',
+                    'due_date': '2025-02-15',
+                    'status': 'pending'
+                }
+            ])
+        auditee_requests = sample_requests
+    
+    # Get user notifications
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    return render_template('auditee/document_requests.html', 
+                         requests=auditee_requests,
+                         current_user=user,
+                         notifications=notifications)
 
 @app.route('/upload-evidence-page')
 @login_required

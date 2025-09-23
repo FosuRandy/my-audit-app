@@ -19,13 +19,13 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#document-requests">
+                        <a class="nav-link" href="{{ url_for('document_requests') }}">
                             <i class="fas fa-file-text me-2"></i>
                             Document Requests
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#fieldwork">
+                        <a class="nav-link" href="{{ url_for('field_communication') }}">
                             <i class="fas fa-comments me-2"></i>
                             Fieldwork Communication
                         </a>
@@ -37,13 +37,13 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#evidence">
+                        <a class="nav-link" href="{{ url_for('upload_evidence_page') }}">
                             <i class="fas fa-upload me-2"></i>
                             Evidence Upload
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#corrective-actions">
+                        <a class="nav-link" href="{{ url_for('corrective_actions') }}">
                             <i class="fas fa-tasks me-2"></i>
                             Corrective Actions
                         </a>
@@ -73,7 +73,7 @@
                         <a href="{{ url_for('auditee_findings') }}" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-exclamation-triangle me-1"></i>View Findings
                         </a>
-                        <a href="#evidence" class="btn btn-sm btn-outline-secondary">
+                        <a href="{{ url_for('upload_evidence_page') }}" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-upload me-1"></i>Upload Evidence
                         </a>
                     </div>
@@ -212,13 +212,13 @@
                                 <a href="{{ url_for('auditee_findings') }}" class="list-group-item list-group-item-action">
                                     <i class="fas fa-exclamation-triangle mr-3"></i> View My Findings
                                 </a>
-                                <a href="#document-requests" class="list-group-item list-group-item-action">
+                                <a href="{{ url_for('document_requests') }}" class="list-group-item list-group-item-action">
                                     <i class="fas fa-file-text mr-3"></i> Document Requests
                                 </a>
-                                <a href="#evidence" class="list-group-item list-group-item-action">
+                                <a href="{{ url_for('upload_evidence_page') }}" class="list-group-item list-group-item-action">
                                     <i class="fas fa-upload mr-3"></i> Upload Evidence
                                 </a>
-                                <a href="#corrective-actions" class="list-group-item list-group-item-action">
+                                <a href="{{ url_for('corrective_actions') }}" class="list-group-item list-group-item-action">
                                     <i class="fas fa-tasks mr-3"></i> Corrective Actions
                                 </a>
                                 <a href="#messages" class="list-group-item list-group-item-action">
