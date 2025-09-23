@@ -111,8 +111,8 @@
                                 </td>
                                 <td>{{ audit.auditor.full_name if audit.auditor else '-' }}</td>
                                 <td>{{ audit.auditee.full_name if audit.auditee else '-' }}</td>
-                                <td>{{ audit.planned_start_date.strftime('%m/%d/%Y') if audit.planned_start_date else '-' }}</td>
-                                <td>{{ audit.planned_end_date.strftime('%m/%d/%Y') if audit.planned_end_date else '-' }}</td>
+                                <td>{{ audit.get('planned_start_date', '-') }}</td>
+                                <td>{{ audit.get('planned_end_date', '-') }}</td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
                                         <a href="{{ url_for('audit_detail', audit_id=audit.id) }}" class="btn btn-outline-primary" title="View Details">

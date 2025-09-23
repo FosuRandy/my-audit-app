@@ -747,7 +747,35 @@ def report_library():
     # Create audit lookup for report details
     audit_lookup = {audit['id']: audit for audit in audits}
     
-    return render_template('report_library.html', reports=reports, audit_lookup=audit_lookup)
+    # Calculate library statistics
+    from datetime import datetime, timedelta
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    
+    # Safely filter reports by date
+    this_month_reports = []
+    most_downloaded_report = None
+    max_downloads = 0
+    
+    for r in reports:
+        # Handle both string and datetime formats for generated_at
+        report_date = r.get('generated_at', '')
+        if isinstance(report_date, str) and report_date.startswith(f"{current_year}-{current_month:02d}"):
+            this_month_reports.append(r)
+        
+        # Find most downloaded report
+        downloads = r.get('download_count', 0)
+        if downloads > max_downloads:
+            max_downloads = downloads
+            most_downloaded_report = r.get('title', 'N/A')
+    
+    library_stats = {
+        'this_month': len(this_month_reports),
+        'most_downloaded': most_downloaded_report or 'No downloads yet',
+        'departments': len(set(audit.get('department_id') for audit in audits if audit.get('department_id')))
+    }
+    
+    return render_template('report_library.html', reports=reports, audit_lookup=audit_lookup, library_stats=library_stats)
 
 # User Management Routes
 @app.route('/users')
@@ -845,6 +873,21 @@ def get_audit_findings(audit_id):
     """Get findings for an audit (API)"""
     findings = [f for f in DATA_STORE['findings'].values() if f.get('audit_id') == audit_id]
     return jsonify({'findings': findings})
+
+@app.route('/api/notifications/count')
+def get_notifications_count():
+    """Get count of unread notifications (API)"""
+    try:
+        user = get_current_user()
+        if not user:
+            return jsonify({'error': 'Unauthorized', 'count': 0}), 401
+        
+        notifications = [n for n in DATA_STORE.get('notifications', {}).values() 
+                        if n.get('user_id') == user['id'] and not n.get('is_read', False)]
+        
+        return jsonify({'count': len(notifications)})
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch notifications', 'details': str(e), 'count': 0}), 500
 
 @app.route('/api/risk-heatmap')
 @login_required
@@ -1583,5 +1626,286 @@ def admin_delete_all_notifications():
     DATA_STORE['notifications'] = []
     flash('All notifications deleted.', 'success')
     return redirect(request.referrer or url_for('dashboard'))
+
+# ===============================================
+# ENGAGEMENT SETUP AND FIELD COMMUNICATION ROUTES
+# ===============================================
+
+@app.route('/engagement-setup')
+@login_required
+@role_required('head_of_business_control', 'auditor', 'director')
+def engagement_setup():
+    """Engagement Setup - comprehensive audit setup interface"""
+    user = get_current_user()
+    
+    # Get audits in various setup phases
+    all_audits = list(DATA_STORE['audits'].values())
+    
+    # Filter audits by setup phase
+    planning_audits = [audit for audit in all_audits if audit.get('status') in ['assigned', 'acknowledged']]
+    approval_audits = [audit for audit in all_audits if audit.get('status') in ['plan_submitted', 'pending_director_approval']]
+    coordination_audits = [audit for audit in all_audits if audit.get('status') in ['approved', 'coordinating']]
+    
+    # Get available resources
+    auditors = [u for u in DATA_STORE['users'].values() if u.get('role') == 'auditor' and u.get('is_active', True)]
+    auditees = [u for u in DATA_STORE['users'].values() if u.get('role') == 'auditee' and u.get('is_active', True)]
+    departments = list(DATA_STORE['departments'].values())
+    
+    # Setup statistics
+    setup_stats = {
+        'total_audits': len(all_audits),
+        'planning_phase': len(planning_audits),
+        'approval_phase': len(approval_audits),
+        'coordination_phase': len(coordination_audits),
+        'available_auditors': len(auditors),
+        'available_auditees': len(auditees)
+    }
+    
+    # Get user notifications
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    return render_template('engagement_setup.html',
+                         planning_audits=planning_audits,
+                         approval_audits=approval_audits,
+                         coordination_audits=coordination_audits,
+                         auditors=auditors,
+                         auditees=auditees,
+                         departments=departments,
+                         setup_stats=setup_stats,
+                         current_user=user,
+                         notifications=notifications)
+
+@app.route('/engagement-setup/create-plan', methods=['POST'])
+@login_required
+@role_required('head_of_business_control')
+def create_engagement_plan():
+    """Create a new engagement plan"""
+    try:
+        plan_data = {
+            'title': request.form['title'],
+            'description': request.form['description'],
+            'department_id': request.form['department_id'],
+            'audit_type': request.form['audit_type'],
+            'priority': request.form['priority'],
+            'planned_start_date': request.form['planned_start_date'],
+            'planned_end_date': request.form['planned_end_date'],
+            'audit_scope': request.form.get('audit_scope', ''),
+            'audit_objectives': request.form.get('audit_objectives', ''),
+            'audit_criteria': request.form.get('audit_criteria', ''),
+            'resources_needed': request.form.get('resources_needed', ''),
+            'status': 'pending_director_approval',
+            'created_by_id': get_current_user()['id'],
+            'created_at': datetime.now().isoformat(),
+            'reference_number': f"AUD-{datetime.now().year}-{len(DATA_STORE['audits']) + 1:04d}"
+        }
+        
+        audit_id = str(uuid.uuid4())
+        plan_data['id'] = audit_id
+        DATA_STORE['audits'][audit_id] = plan_data
+        
+        log_audit_action('create_engagement_plan', 'audit', audit_id, 'New engagement plan created')
+        flash('Engagement plan created successfully and submitted for director approval.', 'success')
+        
+    except Exception as e:
+        flash(f'Error creating engagement plan: {str(e)}', 'error')
+    
+    return redirect(url_for('engagement_setup'))
+
+@app.route('/engagement-setup/coordinate/<audit_id>')
+@login_required
+@role_required('head_of_business_control', 'auditor')
+def coordinate_engagement(audit_id):
+    """Coordinate specific engagement setup"""
+    audit = DATA_STORE['audits'].get(audit_id)
+    if not audit:
+        flash('Audit not found.', 'error')
+        return redirect(url_for('engagement_setup'))
+    
+    user = get_current_user()
+    
+    # Get related data
+    auditor = None
+    auditee = None
+    department = None
+    
+    if audit.get('auditor_id'):
+        auditor = DATA_STORE['users'].get(audit['auditor_id'])
+    if audit.get('auditee_id'):
+        auditee = DATA_STORE['users'].get(audit['auditee_id'])
+    if audit.get('department_id'):
+        department = DATA_STORE['departments'].get(audit['department_id'])
+    
+    # Get engagement checklist items
+    checklist_items = [
+        {'id': 1, 'task': 'Assign auditor and auditee', 'status': 'completed' if audit.get('auditor_id') else 'pending'},
+        {'id': 2, 'task': 'Schedule opening meeting', 'status': audit.get('opening_meeting_scheduled', 'pending')},
+        {'id': 3, 'task': 'Prepare document request list', 'status': audit.get('documents_requested', 'pending')},
+        {'id': 4, 'task': 'Confirm access arrangements', 'status': audit.get('access_confirmed', 'pending')},
+        {'id': 5, 'task': 'Set up communication channels', 'status': audit.get('communication_setup', 'pending')},
+        {'id': 6, 'task': 'Notify stakeholders', 'status': audit.get('stakeholders_notified', 'pending')}
+    ]
+    
+    # Get messages related to this audit
+    audit_messages = [msg for msg in DATA_STORE['messages'].values() 
+                     if msg.get('audit_id') == audit_id]
+    
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    return render_template('engagement_coordination.html',
+                         audit=audit,
+                         auditor=auditor,
+                         auditee=auditee,
+                         department=department,
+                         checklist_items=checklist_items,
+                         audit_messages=audit_messages,
+                         current_user=user,
+                         notifications=notifications)
+
+@app.route('/field-communication')
+@login_required  
+@role_required('auditor', 'auditee', 'head_of_business_control')
+def field_communication():
+    """Field Communication - real-time communication during audit execution"""
+    user = get_current_user()
+    
+    # Get user's active audits
+    active_audits = []
+    if user.get('role') == 'auditor':
+        active_audits = [audit for audit in DATA_STORE['audits'].values() 
+                        if audit.get('auditor_id') == user['id'] and audit.get('status') in ['in_progress', 'assigned', 'acknowledged']]
+    elif user.get('role') == 'auditee':
+        active_audits = [audit for audit in DATA_STORE['audits'].values() 
+                        if audit.get('auditee_id') == user['id'] and audit.get('status') in ['in_progress', 'assigned', 'acknowledged']]
+    elif user.get('role') == 'head_of_business_control':
+        active_audits = [audit for audit in DATA_STORE['audits'].values() 
+                        if audit.get('supervisor_id') == user['id'] and audit.get('status') in ['in_progress', 'assigned', 'acknowledged']]
+    
+    # Get all messages for active audits
+    audit_messages = {}
+    for audit in active_audits:
+        audit_id = audit['id']
+        messages = [msg for msg in DATA_STORE['messages'].values() 
+                   if msg.get('audit_id') == audit_id]
+        audit_messages[audit_id] = sorted(messages, key=lambda x: x.get('created_at', ''), reverse=True)
+    
+    # Get document requests
+    document_requests = []
+    for audit in active_audits:
+        # Create sample document requests based on audit status
+        if audit.get('status') in ['in_progress', 'acknowledged']:
+            document_requests.extend([
+                {
+                    'id': f"req_{audit['id']}_1",
+                    'audit_id': audit['id'],
+                    'audit_title': audit.get('title', 'Untitled Audit'),
+                    'document_type': 'Financial Records',
+                    'description': 'Monthly financial statements and transaction logs',
+                    'priority': 'high',
+                    'status': 'pending',
+                    'due_date': '2025-10-15',
+                    'requested_by': 'Auditor',
+                    'created_at': datetime.now().isoformat()
+                },
+                {
+                    'id': f"req_{audit['id']}_2", 
+                    'audit_id': audit['id'],
+                    'audit_title': audit.get('title', 'Untitled Audit'),
+                    'document_type': 'Policy Documents',
+                    'description': 'Current operational policies and procedures',
+                    'priority': 'medium',
+                    'status': 'pending',
+                    'due_date': '2025-10-20',
+                    'requested_by': 'Auditor',
+                    'created_at': datetime.now().isoformat()
+                }
+            ])
+    
+    # Get evidence files
+    evidence_files = []
+    for audit in active_audits:
+        audit_evidence = [evidence for evidence in DATA_STORE['evidence_files'].values() 
+                         if evidence.get('audit_id') == audit['id']]
+        evidence_files.extend(audit_evidence)
+    
+    # Communication statistics
+    comm_stats = {
+        'active_audits': len(active_audits),
+        'total_messages': sum(len(msgs) for msgs in audit_messages.values()),
+        'pending_requests': len([req for req in document_requests if req.get('status') == 'pending']),
+        'evidence_files': len(evidence_files),
+        'unread_messages': sum(len([msg for msg in msgs if not msg.get('is_read', False)]) for msgs in audit_messages.values())
+    }
+    
+    # Get all users for messaging
+    all_users = [u for u in DATA_STORE['users'].values() if u.get('id') != user['id'] and u.get('is_active', True)]
+    
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    return render_template('field_communication.html',
+                         active_audits=active_audits,
+                         audit_messages=audit_messages,
+                         document_requests=document_requests,
+                         evidence_files=evidence_files,
+                         comm_stats=comm_stats,
+                         all_users=all_users,
+                         current_user=user,
+                         notifications=notifications)
+
+@app.route('/field-communication/send-request', methods=['POST'])
+@login_required
+@role_required('auditor')
+def send_document_request():
+    """Send document request to auditee"""
+    try:
+        request_data = {
+            'id': str(uuid.uuid4()),
+            'audit_id': request.form['audit_id'],
+            'document_type': request.form['document_type'],
+            'description': request.form['description'],
+            'priority': request.form.get('priority', 'medium'),
+            'due_date': request.form['due_date'],
+            'status': 'pending',
+            'requested_by': get_current_user()['id'],
+            'created_at': datetime.now().isoformat()
+        }
+        
+        # Store request (in a real app this would go to a document_requests collection)
+        if 'document_requests' not in DATA_STORE:
+            DATA_STORE['document_requests'] = {}
+        DATA_STORE['document_requests'][request_data['id']] = request_data
+        
+        log_audit_action('send_document_request', 'document_request', request_data['id'], 'Document request sent')
+        flash('Document request sent successfully.', 'success')
+        
+    except Exception as e:
+        flash(f'Error sending document request: {str(e)}', 'error')
+    
+    return redirect(url_for('field_communication'))
+
+@app.route('/field-communication/quick-message', methods=['POST'])
+@login_required
+def send_quick_message():
+    """Send quick message in field communication"""
+    try:
+        message_data = {
+            'audit_id': request.form['audit_id'],
+            'sender_id': get_current_user()['id'],
+            'recipient_id': request.form['recipient_id'],
+            'message_content': request.form['message_content'],
+            'message_type': 'quick_communication',
+            'subject': request.form.get('subject', 'Field Communication'),
+            'priority': request.form.get('priority', 'normal'),
+            'created_at': datetime.now().isoformat()
+        }
+        
+        message_id = message_model.send_message(message_data)
+        log_audit_action('send_quick_message', 'message', message_id, 'Quick message sent')
+        
+        flash('Message sent successfully.', 'success')
+        
+    except Exception as e:
+        flash(f'Error sending message: {str(e)}', 'error')
+    
+    return redirect(url_for('field_communication'))
 
 # Note: All necessary routes are already defined above
