@@ -39,3 +39,4 @@ externalPort = 3000
 
 [agent]
 integrations = ["firebase_barebones_flask==1.0.0"]
+expertMode = true
