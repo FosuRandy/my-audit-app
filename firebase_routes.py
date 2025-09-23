@@ -260,6 +260,11 @@ def auditor_dashboard():
     """Auditor dashboard - manage assigned audits"""
     user = get_current_user()
     
+    # Check if user exists
+    if not user:
+        flash('User session invalid. Please log in again.', 'error')
+        return redirect(url_for('landing'))
+        
     # Get audits assigned to this auditor
     assigned_audits = [audit for audit in DATA_STORE['audits'].values() 
                       if audit.get('auditor_id') == user.get('id')]
@@ -284,7 +289,7 @@ def auditor_dashboard():
     }
     
     # Get user notifications  
-    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user.get('id')]
     
     return render_template('auditor/dashboard.html',
                          assigned_audits=assigned_audits,
@@ -302,6 +307,11 @@ def auditee_dashboard():
     """Auditee dashboard - respond to audit requests"""
     user = get_current_user()
     
+    # Check if user exists
+    if not user:
+        flash('User session invalid. Please log in again.', 'error')
+        return redirect(url_for('landing'))
+        
     # Get audits where this user is auditee
     auditee_audits = [audit for audit in DATA_STORE['audits'].values() 
                      if audit.get('auditee_id') == user.get('id')]
@@ -567,17 +577,22 @@ def messages():
     """View messages"""
     user = get_current_user()
     
+    # Check if user exists
+    if not user:
+        flash('User session invalid. Please log in again.', 'error')
+        return redirect(url_for('landing'))
+    
     # Get all messages for current user (both received and sent)
     user_messages = []
     for msg in DATA_STORE['messages'].values():
-        if msg.get('recipient_id') == user['id'] or msg.get('sender_id') == user['id']:
+        if msg.get('recipient_id') == user.get('id') or msg.get('sender_id') == user.get('id'):
             user_messages.append(msg)
     
     # Get audit lookup for message references
     audit_lookup = {audit_id: audit for audit_id, audit in DATA_STORE['audits'].items()}
     
     # Get all users for new message form
-    all_users = [u for u in DATA_STORE['users'].values() if u.get('id') != user['id']]
+    all_users = [u for u in DATA_STORE['users'].values() if u.get('id') != user.get('id')]
     
     return render_template('messages.html', 
                          messages=user_messages,
