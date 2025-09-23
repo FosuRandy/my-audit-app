@@ -975,10 +975,31 @@ def evidence_management():
 
 @app.route('/audit-reports')
 @login_required
+@role_required('auditor', 'director', 'head_of_business_control')
 def audit_reports():
-    """Audit reports page"""
+    """Audit reports page - filter for current user if auditor"""
+    user = get_current_user()
+    if not user:
+        flash('User session invalid. Please log in again.', 'error')
+        return redirect(url_for('landing'))
+    
     reports = list(DATA_STORE['audit_reports'].values())
-    return render_template('auditor/reports.html', reports=reports)
+    audits = list(DATA_STORE['audits'].values())
+    
+    # Filter reports for auditors based on their assigned audits
+    if user.get('role') == 'auditor':
+        assigned_audit_ids = [audit['id'] for audit in audits if audit.get('auditor_id') == user.get('id')]
+        reports = [report for report in reports if report.get('audit_id') in assigned_audit_ids]
+        audits = [audit for audit in audits if audit.get('auditor_id') == user.get('id')]
+    
+    # Get user notifications
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user.get('id')]
+    
+    return render_template('auditor/reports.html', 
+                         reports=reports, 
+                         audits=audits,
+                         current_user=user,
+                         notifications=notifications)
 
 @app.route('/reports')
 @login_required
