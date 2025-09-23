@@ -313,6 +313,22 @@
                         </select>
                     </div>
 
+                    <!-- Email Section -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="send_email" name="send_email">
+                            <label class="form-check-label" for="send_email">
+                                <i class="fas fa-envelope me-1"></i>Also send via email
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" id="email_fields" style="display: none;">
+                        <label for="email_address" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" name="email_address" placeholder="recipient@example.com">
+                        <div class="form-text">Leave blank to use recipient's system email address</div>
+                    </div>
+
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">
@@ -385,6 +401,22 @@
                         </div>
                     </div>
 
+                    <!-- Email Section for Document Requests -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="send_request_email" name="send_request_email">
+                            <label class="form-check-label" for="send_request_email">
+                                <i class="fas fa-envelope me-1"></i>Also send request via email
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" id="request_email_fields" style="display: none;">
+                        <label for="request_email_address" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" name="request_email_address" placeholder="auditee@example.com">
+                        <div class="form-text">Leave blank to use auditee's system email address</div>
+                    </div>
+
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-success">
@@ -397,4 +429,30 @@
     </div>
 </div>
 {% endif %}
+
+<!-- JavaScript for Email Toggle -->
+<script>
+    // Show/hide email fields for quick message
+    document.getElementById('send_email').addEventListener('change', function() {
+        const emailFields = document.getElementById('email_fields');
+        if (this.checked) {
+            emailFields.style.display = 'block';
+        } else {
+            emailFields.style.display = 'none';
+        }
+    });
+
+    // Show/hide email fields for document request
+    const requestEmailCheckbox = document.getElementById('send_request_email');
+    if (requestEmailCheckbox) {
+        requestEmailCheckbox.addEventListener('change', function() {
+            const emailFields = document.getElementById('request_email_fields');
+            if (this.checked) {
+                emailFields.style.display = 'block';
+            } else {
+                emailFields.style.display = 'none';
+            }
+        });
+    }
+</script>
 {% endblock %}

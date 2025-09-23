@@ -141,7 +141,7 @@
                             <p class="card-text small text-muted">{{ audit.get('description', '')[:100] }}{% if audit.get('description', '')|length > 100 %}...{% endif %}</p>
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="badge bg-info">{{ audit.get('status', '').replace('_', ' ').title() }}</span>
-                                <small class="text-muted">{{ audit.get('created_at', '')[:10] if audit.get('created_at') else '' }}</small>
+                                <small class="text-muted">{{ audit.get('created_at').strftime('%Y-%m-%d') if audit.get('created_at') else '' }}</small>
                             </div>
                         </div>
                     </div>
