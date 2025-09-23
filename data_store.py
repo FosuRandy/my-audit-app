@@ -159,7 +159,144 @@ def initialize_sample_data():
     # Also add to 'risks' for compatibility
     DATA_STORE['risks'][risk_id] = risk_data
     
-    print(f"Initialized sample data: {len(DATA_STORE['users'])} users, {len(DATA_STORE['departments'])} departments")
+    # Create sample reports
+    sample_reports = [
+        {
+            'id': 'sample-1',
+            'title': 'Financial Controls Audit Q4 2024',
+            'type': 'financial',
+            'department_name': 'Finance',
+            'generated_at': '2024-12-15',
+            'generated_by_name': 'Senior Auditor',
+            'status': 'completed',
+            'download_count': 23,
+            'content': '''
+            <div class="report-content">
+                <h2>Financial Controls Audit Report - Q4 2024</h2>
+                <h3>Executive Summary</h3>
+                <p>This comprehensive audit examined the financial controls and processes within the Finance department for Q4 2024.</p>
+                
+                <h3>Key Findings</h3>
+                <ul>
+                    <li>Strong internal controls for expense approvals</li>
+                    <li>Minor deficiencies in reconciliation procedures</li>
+                    <li>Excellent compliance with financial reporting standards</li>
+                </ul>
+                
+                <h3>Recommendations</h3>
+                <ol>
+                    <li>Implement automated reconciliation tools</li>
+                    <li>Enhance monthly closing procedures</li>
+                    <li>Provide additional training on new accounting standards</li>
+                </ol>
+                
+                <h3>Management Response</h3>
+                <p>Management accepts all recommendations and has committed to implementation by Q2 2025.</p>
+            </div>
+            '''
+        },
+        {
+            'id': 'sample-2',
+            'title': 'IT Security Assessment 2024',
+            'type': 'security',
+            'department_name': 'IT',
+            'generated_at': '2024-11-30',
+            'generated_by_name': 'Security Auditor',
+            'status': 'completed',
+            'download_count': 18,
+            'content': '''
+            <div class="report-content">
+                <h2>IT Security Assessment Report - 2024</h2>
+                <h3>Executive Summary</h3>
+                <p>Annual security assessment of IT infrastructure, systems, and protocols.</p>
+                
+                <h3>Security Findings</h3>
+                <ul>
+                    <li>Network security controls are effective</li>
+                    <li>User access management needs improvement</li>
+                    <li>Incident response procedures are well-documented</li>
+                </ul>
+                
+                <h3>Risk Assessment</h3>
+                <p>Overall security posture is good with some areas requiring attention.</p>
+                
+                <h3>Action Items</h3>
+                <ol>
+                    <li>Update user access review procedures</li>
+                    <li>Implement multi-factor authentication</li>
+                    <li>Conduct quarterly security training</li>
+                </ol>
+            </div>
+            '''
+        },
+        {
+            'id': 'sample-3',
+            'title': 'Compliance Review Q3 2024',
+            'type': 'compliance',
+            'department_name': 'Legal',
+            'generated_at': '2024-10-20',
+            'generated_by_name': 'Compliance Officer',
+            'status': 'completed',
+            'download_count': 15,
+            'content': '''
+            <div class="report-content">
+                <h2>Compliance Review Report - Q3 2024</h2>
+                <h3>Scope</h3>
+                <p>Review of regulatory compliance across all business units for Q3 2024.</p>
+                
+                <h3>Compliance Status</h3>
+                <ul>
+                    <li>Full compliance with industry regulations</li>
+                    <li>Minor documentation gaps identified</li>
+                    <li>Training programs are effective</li>
+                </ul>
+                
+                <h3>Areas for Improvement</h3>
+                <ol>
+                    <li>Standardize compliance documentation</li>
+                    <li>Increase frequency of compliance reviews</li>
+                    <li>Update compliance monitoring procedures</li>
+                </ol>
+            </div>
+            '''
+        },
+        {
+            'id': 'sample-4',
+            'title': 'Operational Efficiency Review',
+            'type': 'operational',
+            'department_name': 'Operations',
+            'generated_at': '2024-09-15',
+            'generated_by_name': 'Operations Auditor',
+            'status': 'completed',
+            'download_count': 12,
+            'content': '''
+            <div class="report-content">
+                <h2>Operational Efficiency Review</h2>
+                <h3>Objective</h3>
+                <p>Assess operational efficiency and identify improvement opportunities.</p>
+                
+                <h3>Key Metrics</h3>
+                <ul>
+                    <li>Process efficiency increased by 15%</li>
+                    <li>Customer satisfaction scores improved</li>
+                    <li>Resource utilization optimized</li>
+                </ul>
+                
+                <h3>Recommendations</h3>
+                <ol>
+                    <li>Implement process automation</li>
+                    <li>Establish performance metrics dashboard</li>
+                    <li>Conduct regular efficiency reviews</li>
+                </ol>
+            </div>
+            '''
+        }
+    ]
+    
+    for report_data in sample_reports:
+        DATA_STORE['audit_reports'][report_data['id']] = report_data
+    
+    print(f"Initialized sample data: {len(DATA_STORE['users'])} users, {len(DATA_STORE['departments'])} departments, {len(DATA_STORE['audit_reports'])} reports")
 
 def get_data_store():
     """Get the global data store"""
