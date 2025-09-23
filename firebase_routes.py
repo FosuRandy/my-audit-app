@@ -517,6 +517,49 @@ def assign_auditor(audit_id):
     
     return redirect(url_for('dashboard'))
 
+@app.route('/assign-auditors')
+@login_required
+@role_required('head_of_business_control')
+def assign_auditors():
+    """Head of Business Control - General assign auditors page"""
+    user = get_current_user()
+    
+    # Get approved audits that need auditor assignment
+    available_audits = [audit for audit in DATA_STORE['audits'].values() 
+                       if audit.get('status') == 'approved' and not audit.get('auditor_id')]
+    
+    # Get all available auditors
+    auditors = [user for user in DATA_STORE['users'].values() 
+               if user.get('role') == 'auditor' and user.get('is_active', True)]
+    
+    # Get all available auditees 
+    auditees = [user for user in DATA_STORE['users'].values() 
+               if user.get('role') == 'auditee' and user.get('is_active', True)]
+    
+    # Get departments for context
+    departments = {dept['id']: dept for dept in DATA_STORE['departments'].values()}
+    
+    # Enrich audits with department names
+    for audit in available_audits:
+        if audit.get('department_id') and audit['department_id'] in departments:
+            audit['department_name'] = departments[audit['department_id']]['name']
+    
+    # Enrich auditors with department names  
+    for auditor in auditors:
+        if auditor.get('department_id') and auditor['department_id'] in departments:
+            auditor['department_name'] = departments[auditor['department_id']]['name']
+    
+    # Enrich auditees with department names
+    for auditee in auditees:
+        if auditee.get('department_id') and auditee['department_id'] in departments:
+            auditee['department_name'] = departments[auditee['department_id']]['name']
+    
+    return render_template('head_of_business_control/assign_auditors.html',
+                         available_audits=available_audits,
+                         auditors=auditors,
+                         auditees=auditees,
+                         current_user=user)
+
 # Messaging System Routes
 @app.route('/messages')
 @login_required

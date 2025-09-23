@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Assign Auditors - Audit Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">
+                    <i class="fas fa-user-plus me-2"></i>Assign Auditors
+                </h1>
+                <a href="{{ url_for('head_of_business_control_dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if available_audits %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clipboard-list me-2"></i>Approved Audits Pending Assignment
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Audit Title</th>
+                                    <th>Department</th>
+                                    <th>Priority</th>
+                                    <th>Planned Start</th>
+                                    <th>Available Auditors</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for audit in available_audits %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ audit.get('title', 'Untitled Audit') }}</strong>
+                                        <br><small class="text-muted">{{ audit.get('reference_number', 'No ref') }}</small>
+                                    </td>
+                                    <td>{{ audit.get('department_name', 'Not specified') }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if audit.get('priority') == 'critical' else 'warning' if audit.get('priority') == 'high' else 'primary' }}">
+                                            {{ audit.get('priority', 'medium').title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {{ audit.get('planned_start_date', 'Not set') }}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ auditors|length }} Available</span>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-primary btn-sm" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#assignModal{{ audit.get('id') }}">
+                                            <i class="fas fa-user-plus me-2"></i>Assign Auditor
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <!-- Assignment Modal for each audit -->
+                                <div class="modal fade" id="assignModal{{ audit.get('id') }}" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">
+                                                    <i class="fas fa-user-plus me-2"></i>Assign Auditor to: {{ audit.get('title', 'Untitled Audit') }}
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form method="POST" action="{{ url_for('assign_auditor', audit_id=audit.get('id')) }}">
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <strong>Audit Details:</strong>
+                                                            <ul class="list-unstyled mt-2">
+                                                                <li><strong>Priority:</strong> {{ audit.get('priority', 'medium').title() }}</li>
+                                                                <li><strong>Department:</strong> {{ audit.get('department_name', 'Not specified') }}</li>
+                                                                <li><strong>Start Date:</strong> {{ audit.get('planned_start_date', 'Not set') }}</li>
+                                                            </ul>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            {% if audit.get('description') %}
+                                                            <strong>Description:</strong>
+                                                            <p class="text-muted small mt-2">{{ audit.get('description') }}</p>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label for="auditor_id_{{ audit.get('id') }}" class="form-label">
+                                                            Select Lead Auditor <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select class="form-select" name="auditor_id" id="auditor_id_{{ audit.get('id') }}" required>
+                                                            <option value="">Choose an auditor...</option>
+                                                            {% for auditor in auditors %}
+                                                            <option value="{{ auditor.get('id') }}">
+                                                                {{ auditor.get('first_name', '') }} {{ auditor.get('last_name', '') }}
+                                                                {% if auditor.get('department_name') %} - {{ auditor.get('department_name') }}{% endif %}
+                                                                {% if auditor.get('phone') %} ({{ auditor.get('phone') }}){% endif %}
+                                                            </option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label for="auditee_id_{{ audit.get('id') }}" class="form-label">
+                                                            Select Auditee <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select class="form-select" name="auditee_id" id="auditee_id_{{ audit.get('id') }}" required>
+                                                            <option value="">Choose an auditee...</option>
+                                                            {% for auditee in auditees %}
+                                                            <option value="{{ auditee.get('id') }}">
+                                                                {{ auditee.get('first_name', '') }} {{ auditee.get('last_name', '') }}
+                                                                {% if auditee.get('department_name') %} - {{ auditee.get('department_name') }}{% endif %}
+                                                            </option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                            Cancel
+                                                        </button>
+                                                        <button type="submit" class="btn btn-success">
+                                                            <i class="fas fa-user-check me-2"></i>Assign Auditor
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-check-circle fa-5x text-success mb-4"></i>
+                    <h3>All Audits Assigned</h3>
+                    <p class="text-muted">No approved audits are currently pending auditor assignment.</p>
+                    <a href="{{ url_for('head_of_business_control_dashboard') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Return to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Available Auditors Summary -->
+    {% if auditors %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-users me-2"></i>Available Auditors ({{ auditors|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for auditor in auditors %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ auditor.get('first_name', '') }} {{ auditor.get('last_name', '') }}</h6>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            {% if auditor.get('department_name') %}
+                                                <i class="fas fa-building me-1"></i>{{ auditor.get('department_name') }}<br>
+                                            {% endif %}
+                                            {% if auditor.get('phone') %}
+                                                <i class="fas fa-phone me-1"></i>{{ auditor.get('phone') }}<br>
+                                            {% endif %}
+                                            {% if auditor.get('email') %}
+                                                <i class="fas fa-envelope me-1"></i>{{ auditor.get('email') }}
+                                            {% endif %}
+                                        </small>
+                                    </p>
+                                    <span class="badge bg-success">Available</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
