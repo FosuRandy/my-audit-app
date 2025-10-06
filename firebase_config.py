@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import uuid
 
 # Try importing Firebase with fallback
 try:
