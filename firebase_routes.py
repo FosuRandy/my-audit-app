@@ -253,12 +253,30 @@ def head_of_business_control_dashboard():
                       datetime.fromisoformat(a['target_date']) < datetime.now() and 
                       a.get('status') != 'completed']
     
+    # Calculate available auditors count
+    active_auditors = [a for a in auditors if a.get('is_active', True)]
+    
+    # Calculate active audits count
+    active_audits = [a for a in DATA_STORE['audits'].values() 
+                    if a.get('status') not in ['draft', 'completed', 'rejected']]
+    
+    # Calculate high/medium/low risk counts
+    high_risk = len([r for r in risks if r.get('risk_level') == 'high'])
+    medium_risk = len([r for r in risks if r.get('risk_level') == 'medium'])
+    low_risk = len([r for r in risks if r.get('risk_level') == 'low'])
+    
     stats = {
         'draft_audits': len(draft_audits),
         'director_approved_audits': len(director_approved_audits), 
         'auditor_plan_submitted_audits': len(auditor_plan_submitted_audits),
         'ready_audits': len(ready_audits),
+        'active_audits': len(active_audits),
+        'available_auditors': len(active_auditors),
+        'risk_areas': len(risks),
         'total_risks': len(risks),
+        'high_risk': high_risk,
+        'medium_risk': medium_risk,
+        'low_risk': low_risk,
         'overdue_actions': len(overdue_actions)
     }
     
@@ -274,6 +292,7 @@ def head_of_business_control_dashboard():
                          auditor_plan_submitted_audits=auditor_plan_submitted_audits,
                          ready_audits=ready_audits,
                          auditors=auditors,
+                         available_auditors=active_auditors,
                          auditees=auditees,
                          risks=risks,
                          overdue_actions=overdue_actions,
@@ -576,9 +595,12 @@ def assign_auditor(audit_id):
     
     if request.method == 'POST':
         try:
+            auditor_id = request.form['auditor_id']
+            auditee_id = request.form['auditee_id']
+            
             audit_data = {
-                'auditor_id': request.form['auditor_id'],
-                'auditee_id': request.form.get('auditee_id', ''),
+                'auditor_id': auditor_id,
+                'auditee_id': auditee_id,
                 'status': 'assigned',
                 'auditor_assigned_at': datetime.now().isoformat()
             }
@@ -588,18 +610,30 @@ def assign_auditor(audit_id):
                 
                 # Notify auditor
                 create_notification(
-                    user_id=request.form['auditor_id'],
+                    user_id=auditor_id,
                     title='New Audit Assignment',
-                    message=f'You have been assigned to an audit. Please acknowledge this assignment.',
+                    message=f'You have been assigned to audit: "{audit.get("title", "")}". Please acknowledge this assignment.',
                     notification_type='audit_assigned',
                     related_entity_type='audit',
                     related_entity_id=audit_id
                 )
                 
-            log_audit_action('assign_auditor', 'audit', audit_id, f'Auditor assigned to audit')
+                # Notify auditee
+                create_notification(
+                    user_id=auditee_id,
+                    title='Audit Assignment',
+                    message=f'You have been assigned as auditee for audit: "{audit.get("title", "")}". The auditor will contact you soon.',
+                    notification_type='auditee_assigned',
+                    related_entity_type='audit',
+                    related_entity_id=audit_id
+                )
+                
+            log_audit_action('assign_auditor', 'audit', audit_id, f'Auditor and auditee assigned to audit')
             
-            flash('Auditor assigned successfully.', 'success')
+            flash('Auditor and auditee assigned successfully.', 'success')
             
+        except KeyError as e:
+            flash(f'Missing required field: {str(e)}', 'error')
         except Exception as e:
             flash(f'Error assigning auditor: {str(e)}', 'error')
         
@@ -621,12 +655,23 @@ def assign_auditor(audit_id):
         if dept_id and dept_id in DATA_STORE.get('departments', {}):
             auditor['department_name'] = DATA_STORE['departments'][dept_id].get('name', 'N/A')
     
+    # Get available auditees
+    auditees = [user for user in DATA_STORE['users'].values() 
+               if user.get('role') == 'auditee' and user.get('is_active', True)]
+    
+    # Enrich auditees with department names
+    for auditee in auditees:
+        dept_id = auditee.get('department_id')
+        if dept_id and dept_id in DATA_STORE.get('departments', {}):
+            auditee['department_name'] = DATA_STORE['departments'][dept_id].get('name', 'N/A')
+    
     user = get_current_user()
     notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
     
     return render_template('head_of_business_control/assign_auditor.html',
                          audit=audit,
                          available_auditors=auditors,
+                         available_auditees=auditees,
                          current_user=user,
                          notifications=notifications)
 

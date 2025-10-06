@@ -87,6 +87,20 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="auditee_id" class="form-label">Choose Auditee <span class="text-danger">*</span></label>
+                        <select class="form-select" id="auditee_id" name="auditee_id" required>
+                            <option value="">Select an auditee...</option>
+                            {% for auditee in available_auditees %}
+                            <option value="{{ auditee.get('id') }}">
+                                {{ auditee.get('first_name', '') }} {{ auditee.get('last_name', '') }} - {{ auditee.get('department_name', 'No Department') }}
+                                {% if auditee.get('email') %} ({{ auditee.get('email') }}){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Select the auditee who will be audited</div>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="assignment_notes" class="form-label">Assignment Notes <small class="text-muted">(Optional)</small></label>
                         <textarea class="form-control" id="assignment_notes" name="assignment_notes" rows="4"
                                   placeholder="Provide any specific instructions, priorities, or notes for the assigned auditor..."></textarea>

@@ -304,7 +304,7 @@
                 </div>
             </div>
 
-            <!-- Auditor Assignment -->
+            <!-- Available Auditors List -->
             <div class="row">
                 <div class="col-12">
                     <div class="card shadow mb-4">
@@ -317,43 +317,26 @@
                                     <thead>
                                         <tr>
                                             <th>Auditor Name</th>
+                                            <th>Email</th>
                                             <th>Department</th>
-                                            <th>Specialization</th>
-                                            <th>Current Load</th>
                                             <th>Status</th>
-                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% if available_auditors %}
                                         {% for auditor in available_auditors %}
                                         <tr>
-                                            <td>{{ auditor.get('first_name', '') + ' ' + auditor.get('last_name', '') }}</td>
+                                            <td>{{ auditor.get('first_name', '') }} {{ auditor.get('last_name', '') }}</td>
+                                            <td>{{ auditor.get('email', 'N/A') }}</td>
                                             <td>{{ auditor.get('department_name', 'N/A') }}</td>
-                                            <td>{{ auditor.get('specialization', 'General') }}</td>
                                             <td>
-                                                <div class="progress" style="height: 20px;">
-                                                    <div class="progress-bar bg-{{ 'danger' if auditor.get('workload', 0) > 80 else 'warning' if auditor.get('workload', 0) > 60 else 'success' }}" 
-                                                         role="progressbar" style="width: {{ auditor.get('workload', 0) }}%;">
-                                                        {{ auditor.get('workload', 0) }}%
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-{{ 'success' if auditor.get('status') == 'available' else 'warning' if auditor.get('status') == 'busy' else 'danger' }}">
-                                                    {{ auditor.get('status', 'available').title() }}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignAuditorModal{{ auditor.get('id') }}">
-                                                    Assign
-                                                </button>
+                                                <span class="badge bg-success">Active</span>
                                             </td>
                                         </tr>
                                         {% endfor %}
                                         {% else %}
                                         <tr>
-                                            <td colspan="6" class="text-center py-4">
+                                            <td colspan="4" class="text-center py-4">
                                                 <i class="fas fa-users fa-3x text-muted mb-3"></i>
                                                 <p class="text-muted">No auditors available</p>
                                             </td>
