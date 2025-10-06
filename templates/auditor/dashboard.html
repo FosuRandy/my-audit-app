@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}Auditor Dashboard - Audit Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Audit Management Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar bg-light border-right">
+            <div class="position-sticky pt-3">
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>Audit Management</span>
+                </h6>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#overview">
+                            <i class="fas fa-tachometer-alt me-2"></i>
+                            Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('engagement_setup') }}">
+                            <i class="fas fa-cogs me-2"></i>
+                            Engagement Setup
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('field_communication') }}">
+                            <i class="fas fa-comments me-2"></i>
+                            Fieldwork Communication
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('audit_execution') }}">
+                            <i class="fas fa-tasks me-2"></i>
+                            Execution
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('findings') }}">
+                            <i class="fas fa-search me-2"></i>
+                            Findings & Actions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('audit_reports') }}">
+                            <i class="fas fa-file-alt me-2"></i>
+                            Reporting
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('report_library') }}">
+                            <i class="fas fa-book me-2"></i>
+                            Report Library
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#follow-up">
+                            <i class="fas fa-clock me-2"></i>
+                            Follow-Up
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="fas fa-user-check me-2"></i>Auditor Dashboard</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="{{ url_for('findings') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-search me-1"></i>View Findings
+                        </a>
+                        <a href="{{ url_for('generate_report') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-file-alt me-1"></i>Draft Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Assigned Audits</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.assigned_audits or 0 }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">In Progress</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.in_progress or 0 }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Findings Recorded</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.findings_recorded or 0 }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-search fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Completed Audits</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.completed_audits or 0 }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assigned Audits -->
+            <div class="row">
+                <div class="col-xl-8 col-lg-7">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">My Assigned Audits</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>Audit Name</th>
+                                            <th>Department</th>
+                                            <th>Status</th>
+                                            <th>Due Date</th>
+                                            <th>Progress</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if assigned_audits %}
+                                        {% for audit in assigned_audits %}
+                                        <tr>
+                                            <td>{{ audit.get('title', 'Untitled Audit') }}</td>
+                                            <td>{{ audit.get('department_name', 'N/A') }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 'warning' if audit.get('status') == 'in_progress' else 'info' if audit.get('status') == 'planning' else 'success' if audit.get('status') == 'completed' else 'secondary' }}">
+                                                    {{ audit.get('status', 'draft').replace('_', ' ').title() }}
+                                                </span>
+                                            </td>
+                                            <td>{{ audit.get('end_date', '')[:10] if audit.get('end_date') else 'TBD' }}</td>
+                                            <td>
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar" role="progressbar" style="width: {{ audit.get('progress', 0) }}%;">
+                                                        {{ audit.get('progress', 0) }}%
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('audit_detail', audit_id=audit.get('id')) }}" class="btn btn-sm btn-primary">View</a>
+                                                {% if audit.get('status') == 'in_progress' %}
+                                                <a href="{{ url_for('audit_findings', audit_id=audit.get('id')) }}" class="btn btn-sm btn-warning">Findings</a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <i class="fas fa-clipboard fa-3x text-muted mb-3"></i>
+                                                <p class="text-muted">No audits assigned yet</p>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activities -->
+                <div class="col-xl-4 col-lg-5">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Recent Activities</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                {% if recent_activities %}
+                                {% for activity in recent_activities %}
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-{{ 'primary' if activity.type == 'audit_start' else 'warning' if activity.type == 'finding_added' else 'success' }}"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="timeline-title">{{ activity.get('title', 'Activity') }}</h6>
+                                        <p class="timeline-description">{{ activity.get('description', '') }}</p>
+                                        <small class="text-muted">{{ activity.get('timestamp', '')[:16] }}</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No recent activities</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Messages -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Pending Document Requests & Messages</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>From</th>
+                                            <th>Audit</th>
+                                            <th>Subject</th>
+                                            <th>Type</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if pending_messages %}
+                                        {% for message in pending_messages %}
+                                        <tr>
+                                            <td>{{ message.get('from_name', 'Unknown') }}</td>
+                                            <td>{{ message.get('audit_title', 'N/A') }}</td>
+                                            <td>{{ message.get('subject', 'No Subject') }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 'info' if message.get('type') == 'document_request' else 'primary' if message.get('type') == 'response' else 'secondary' }}">
+                                                    {{ message.get('type', 'message').replace('_', ' ').title() }}
+                                                </span>
+                                            </td>
+                                            <td>{{ message.get('created_at', '')[:10] }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 'warning' if message.get('status') == 'pending' else 'success' if message.get('status') == 'responded' else 'secondary' }}">
+                                                    {{ message.get('status', 'pending').title() }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('view_message', message_id=message.get('id')) }}" class="btn btn-sm btn-outline-primary">View</a>
+                                                {% if message.get('status') == 'pending' %}
+                                                <a href="{{ url_for('respond_message', message_id=message.get('id')) }}" class="btn btn-sm btn-outline-success">Respond</a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4">
+                                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                                <p class="text-muted">No pending messages</p>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -25px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.timeline-title {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.timeline-description {
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+</style>
+{% endblock %}

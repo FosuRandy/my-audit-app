@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}Engagement Coordination - {{ audit.get('title', 'Audit') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">
+                    <i class="fas fa-handshake me-2"></i>Engagement Coordination
+                </h1>
+                <a href="{{ url_for('engagement_setup') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Setup
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-clipboard-list me-2"></i>{{ audit.get('title', 'Untitled Audit') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Reference:</strong> {{ audit.get('reference_number', 'N/A') }}</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-{{ 'warning' if audit.get('status') == 'assigned' else 'info' if audit.get('status') == 'approved' else 'success' }}">
+                                    {{ audit.get('status', '').replace('_', ' ').title() }}
+                                </span>
+                            </p>
+                            <p><strong>Priority:</strong> 
+                                <span class="badge bg-{{ 'danger' if audit.get('priority') == 'critical' else 'warning' if audit.get('priority') == 'high' else 'primary' }}">
+                                    {{ audit.get('priority', 'medium').title() }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Department:</strong> {{ department.get('name', 'N/A') if department else 'N/A' }}</p>
+                            <p><strong>Planned Start:</strong> {{ audit.get('planned_start_date', 'Not set') }}</p>
+                            <p><strong>Planned End:</strong> {{ audit.get('planned_end_date', 'Not set') }}</p>
+                        </div>
+                    </div>
+                    {% if audit.get('description') %}
+                    <div class="row">
+                        <div class="col-12">
+                            <hr>
+                            <p><strong>Description:</strong></p>
+                            <p class="text-muted">{{ audit.get('description') }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Coordination Checklist -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-tasks me-2"></i>Engagement Coordination Checklist
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for item in checklist_items %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-{{ 'check-circle text-success' if item.status == 'completed' else 'circle text-muted' }} me-3"></i>
+                                <div>
+                                    <strong>{{ item.task }}</strong>
+                                    <div class="text-muted small">
+                                        {% if item.id == 1 %}
+                                        Ensure appropriate auditor and auditee are assigned with proper qualifications
+                                        {% elif item.id == 2 %}
+                                        Schedule kick-off meeting with all stakeholders
+                                        {% elif item.id == 3 %}
+                                        Prepare comprehensive list of required documents and evidence
+                                        {% elif item.id == 4 %}
+                                        Confirm physical and system access arrangements are in place
+                                        {% elif item.id == 5 %}
+                                        Establish secure communication channels for the audit team
+                                        {% elif item.id == 6 %}
+                                        Notify all relevant stakeholders about the upcoming audit
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="badge bg-{{ 'success' if item.status == 'completed' else 'warning' if item.status == 'in_progress' else 'secondary' }}">
+                                {{ item.status.replace('_', ' ').title() }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div class="progress">
+                            {% set completed_count = checklist_items | selectattr('status', 'equalto', 'completed') | list | length %}
+                            {% set progress = (completed_count / checklist_items|length * 100) | round %}
+                            <div class="progress-bar bg-{{ 'success' if progress == 100 else 'warning' if progress > 50 else 'info' }}" 
+                                 style="width: {{ progress }}%">
+                                {{ progress }}% Complete
+                            </div>
+                        </div>
+                        <small class="text-muted">{{ completed_count }} of {{ checklist_items|length }} tasks completed</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Communication -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-comments me-2"></i>Team Communication
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if audit_messages %}
+                    <div class="message-list" style="max-height: 300px; overflow-y: auto;">
+                        {% for message in audit_messages %}
+                        <div class="message-item mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ message.get('sender_name', 'Unknown') }}</strong>
+                                <small class="text-muted">{{ message.get('created_at', '')[:16] if message.get('created_at') else '' }}</small>
+                            </div>
+                            <p class="mb-1">{{ message.get('message_content', '') }}</p>
+                            {% if message.get('subject') %}
+                            <small class="text-muted">Re: {{ message.get('subject') }}</small>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No messages yet. Start coordinating with your team!</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Quick Message Form -->
+                    <div class="mt-4">
+                        <form action="{{ url_for('send_quick_message') }}" method="POST">
+                            <input type="hidden" name="audit_id" value="{{ audit.get('id') }}">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <select class="form-select" name="recipient_id" required>
+                                        <option value="">Send to...</option>
+                                        {% if auditor %}
+                                        <option value="{{ auditor.get('id') }}">{{ auditor.get('first_name', '') }} {{ auditor.get('last_name', '') }} (Auditor)</option>
+                                        {% endif %}
+                                        {% if auditee %}
+                                        <option value="{{ auditee.get('id') }}">{{ auditee.get('first_name', '') }} {{ auditee.get('last_name', '') }} (Auditee)</option>
+                                        {% endif %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" name="message_content" placeholder="Quick message..." required>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Information -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-users me-2"></i>Audit Team
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Auditor -->
+                    {% if auditor %}
+                    <div class="team-member mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar me-3">
+                                <span class="badge bg-primary rounded-pill p-2">{{ auditor.get('first_name', 'U')[0] }}{{ auditor.get('last_name', 'U')[0] }}</span>
+                            </div>
+                            <div>
+                                <strong>{{ auditor.get('first_name', '') }} {{ auditor.get('last_name', '') }}</strong>
+                                <div class="text-muted small">Lead Auditor</div>
+                                {% if auditor.get('email') %}
+                                <div class="text-muted small">
+                                    <i class="fas fa-envelope me-1"></i>{{ auditor.get('email') }}
+                                </div>
+                                {% endif %}
+                                {% if auditor.get('phone') %}
+                                <div class="text-muted small">
+                                    <i class="fas fa-phone me-1"></i>{{ auditor.get('phone') }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-2">
+                        <i class="fas fa-user-plus fa-2x text-muted mb-2"></i>
+                        <p class="text-muted small">No auditor assigned</p>
+                    </div>
+                    {% endif %}
+
+                    <hr>
+
+                    <!-- Auditee -->
+                    {% if auditee %}
+                    <div class="team-member mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar me-3">
+                                <span class="badge bg-info rounded-pill p-2">{{ auditee.get('first_name', 'U')[0] }}{{ auditee.get('last_name', 'U')[0] }}</span>
+                            </div>
+                            <div>
+                                <strong>{{ auditee.get('first_name', '') }} {{ auditee.get('last_name', '') }}</strong>
+                                <div class="text-muted small">Auditee</div>
+                                {% if auditee.get('email') %}
+                                <div class="text-muted small">
+                                    <i class="fas fa-envelope me-1"></i>{{ auditee.get('email') }}
+                                </div>
+                                {% endif %}
+                                {% if auditee.get('phone') %}
+                                <div class="text-muted small">
+                                    <i class="fas fa-phone me-1"></i>{{ auditee.get('phone') }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-2">
+                        <i class="fas fa-user-check fa-2x text-muted mb-2"></i>
+                        <p class="text-muted small">No auditee assigned</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('field_communication') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-comments me-2"></i>Open Field Communication
+                        </a>
+                        <a href="{{ url_for('messages') }}" class="btn btn-outline-info">
+                            <i class="fas fa-envelope me-2"></i>Send Formal Message
+                        </a>
+                        {% if current_user.role in ['head_of_business_control', 'auditor'] %}
+                        <a href="{{ url_for('evidence_management') }}" class="btn btn-outline-success">
+                            <i class="fas fa-file-upload me-2"></i>Manage Evidence
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-tachometer-alt me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

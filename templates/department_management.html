@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block title %}Department Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-building mr-2"></i>Department Management
+        </h1>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
+            <i class="fas fa-plus mr-1"></i>Add Department
+        </button>
+    </div>
+
+    <div class="row">
+        {% for department in departments %}
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold text-primary">{{ department.name }}</h6>
+                        <div>
+                            {% if department.is_active %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if department.description %}
+                    <p class="card-text">{{ department.description }}</p>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <strong>Department Head:</strong><br>
+                                {{ department.department_head or 'Not Assigned' }}
+                            </small>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <strong>Created:</strong><br>
+                                {{ department.created_at.strftime('%Y-%m-%d') if department.created_at else 'Unknown' }}
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="row mt-2">
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <strong>Total Users:</strong><br>
+                                {{ department.user_count or 0 }}
+                            </small>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <strong>Active Audits:</strong><br>
+                                {{ department.active_audits_count or 0 }}
+                            </small>
+                        </div>
+                    </div>
+
+                    {% if department.units %}
+                    <div class="mt-3">
+                        <small class="text-info">
+                            <strong>Units:</strong><br>
+                            {% for unit in department.units %}
+                                <span class="badge badge-light mr-1">{{ unit }}</span>
+                            {% endfor %}
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editDepartment('{{ department.id }}')">
+                                <i class="fas fa-edit mr-1"></i>Edit
+                            </button>
+                            <a href="/departments/{{ department.id }}/users" class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-users mr-1"></i>Users
+                            </a>
+                        </div>
+                        <div>
+                            {% if department.is_active %}
+                            <button class="btn btn-sm btn-outline-warning" onclick="toggleDepartment('{{ department.id }}', false)">
+                                <i class="fas fa-ban mr-1"></i>Deactivate
+                            </button>
+                            {% else %}
+                            <button class="btn btn-sm btn-outline-success" onclick="toggleDepartment('{{ department.id }}', true)">
+                                <i class="fas fa-check mr-1"></i>Activate
+                            </button>
+                            {% endif %}
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteDepartment('{{ department.id }}', '{{ department.name }}')">
+                                <i class="fas fa-trash mr-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not departments %}
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                    <h5>No Departments Found</h5>
+                    <p class="text-muted">Create your first department to organize users and audits.</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
+                        Create Department
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Department Modal -->
+<div class="modal fade" id="addDepartmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/departments/create">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Department</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Department Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required 
+                            placeholder="Enter department name...">
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" 
+                            placeholder="Describe the department's role and responsibilities..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="department_head" class="form-label">Department Head</label>
+                        <input type="text" class="form-control" id="department_head" name="department_head" 
+                            placeholder="Name of department head...">
+                    </div>
+                    <div class="mb-3">
+                        <label for="units" class="form-label">Units/Sub-departments</label>
+                        <input type="text" class="form-control" id="units" name="units" 
+                            placeholder="Enter units separated by commas (e.g., Accounting, Payroll, Budgeting)">
+                        <small class="text-muted">Separate multiple units with commas</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Department Modal -->
+<div class="modal fade" id="editDepartmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editDepartmentForm" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Department</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label">Department Name</label>
+                        <input type="text" class="form-control" id="edit_name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">Description</label>
+                        <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_department_head" class="form-label">Department Head</label>
+                        <input type="text" class="form-control" id="edit_department_head" name="department_head">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_units" class="form-label">Units/Sub-departments</label>
+                        <input type="text" class="form-control" id="edit_units" name="units">
+                        <small class="text-muted">Separate multiple units with commas</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function editDepartment(departmentId) {
+    fetch(`/departments/${departmentId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('edit_name').value = data.name || '';
+            document.getElementById('edit_description').value = data.description || '';
+            document.getElementById('edit_department_head').value = data.department_head || '';
+            document.getElementById('edit_units').value = data.units ? data.units.join(', ') : '';
+            document.getElementById('editDepartmentForm').action = `/departments/${departmentId}/edit`;
+            new bootstrap.Modal(document.getElementById('editDepartmentModal')).show();
+        });
+}
+
+function toggleDepartment(departmentId, activate) {
+    fetch(`/departments/${departmentId}/toggle`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({active: activate})
+    }).then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Error updating department status');
+        }
+    });
+}
+
+function deleteDepartment(departmentId, departmentName) {
+    if (confirm(`Are you sure you want to delete the department "${departmentName}"? This action cannot be undone.`)) {
+        // Get CSRF token first
+        fetch('/csrf-token')
+            .then(response => response.json())
+            .then(data => {
+                return fetch(`/departments/${departmentId}/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({csrf_token: data.csrf_token})
+                });
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    response.text().then(text => {
+                        alert('Error deleting department: ' + text);
+                    });
+                }
+            }).catch(error => {
+                alert('Error deleting department: ' + error.message);
+            });
+    }
+}
+</script>
+{% endblock %}

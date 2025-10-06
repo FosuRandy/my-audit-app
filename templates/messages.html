@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Messages{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-comments mr-2"></i>Audit Messages
+        </h1>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+            <i class="fas fa-plus mr-1"></i>New Message
+        </button>
+    </div>
+
+    <div class="row">
+        {% for message in messages %}
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow {% if not message.is_read %}border-primary{% endif %}">
+                <div class="card-header py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h6 class="m-0 font-weight-bold {% if not message.is_read %}text-primary{% else %}text-muted{% endif %}">
+                            {% if message.message_type == 'document_request' %}
+                                <i class="fas fa-file-alt mr-1"></i>Document Request
+                            {% elif message.message_type == 'finding_notification' %}
+                                <i class="fas fa-exclamation-triangle mr-1"></i>Finding Notification
+                            {% else %}
+                                <i class="fas fa-comment mr-1"></i>General Message
+                            {% endif %}
+                        </h6>
+                        {% if not message.is_read %}
+                            <span class="badge badge-primary">New</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ message.message_content }}</p>
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">
+                                <strong>From:</strong> {{ message.sender_name or 'System' }}
+                            </small>
+                        </div>
+                        <div class="col-6 text-end">
+                            <small class="text-muted">
+                                {{ message.created_at.strftime('%Y-%m-%d %H:%M') if message.created_at else 'Unknown' }}
+                            </small>
+                        </div>
+                    </div>
+                    {% if message.audit_id %}
+                    <div class="mt-2">
+                        <small class="text-info">
+                            <i class="fas fa-clipboard-list mr-1"></i>
+                            Related to: {{ audit_lookup.get(message.audit_id, {}).get('title', 'Unknown Audit') }}
+                        </small>
+                    </div>
+                    {% endif %}
+                    <div class="mt-3">
+                        {% if not message.is_read %}
+                        <button class="btn btn-sm btn-outline-primary" onclick="markAsRead('{{ message.id }}')">
+                            <i class="fas fa-check mr-1"></i>Mark as Read
+                        </button>
+                        {% endif %}
+                        <button class="btn btn-sm btn-outline-secondary" onclick="replyToMessage('{{ message.id }}')">
+                            <i class="fas fa-reply mr-1"></i>Reply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not messages %}
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body text-center">
+                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                    <h5>No Messages Found</h5>
+                    <p class="text-muted">You don't have any messages yet. Messages will appear here when auditors and auditees communicate.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- New Message Modal -->
+<div class="modal fade" id="newMessageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/messages/send">
+                <div class="modal-header">
+                    <h5 class="modal-title">Send Message</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="audit_id" class="form-label">Related Audit</label>
+                        <select class="form-control" id="audit_id" name="audit_id">
+                            <option value="">Select Audit (Optional)</option>
+                            {% for audit_id, audit in audit_lookup.items() %}
+                            <option value="{{ audit_id }}">{{ audit.title }} ({{ audit.reference_number }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="recipient_id" class="form-label">Recipient</label>
+                        <select class="form-control" id="recipient_id" name="recipient_id" required>
+                            <option value="">Select Recipient</option>
+                            {% for user in all_users %}
+                            <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }} ({{ user.role.replace('_', ' ').title() }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="message_type" class="form-label">Message Type</label>
+                        <select class="form-control" id="message_type" name="message_type">
+                            <option value="general">General</option>
+                            <option value="document_request">Document Request</option>
+                            <option value="finding_notification">Finding Notification</option>
+                            <option value="clarification">Clarification</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="message_content" class="form-label">Message</label>
+                        <textarea class="form-control" id="message_content" name="message_content" rows="4" required 
+                            placeholder="Type your message here..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Send Message</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function markAsRead(messageId) {
+    fetch(`/messages/${messageId}/read`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'}
+    }).then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('Error marking message as read');
+        }
+    });
+}
+
+function replyToMessage(messageId) {
+    // Open new message modal with pre-filled recipient
+    document.getElementById('newMessageModal').querySelector('.modal-title').textContent = 'Reply to Message';
+    // Additional logic to pre-fill recipient would go here
+    new bootstrap.Modal(document.getElementById('newMessageModal')).show();
+}
+</script>
+{% endblock %}

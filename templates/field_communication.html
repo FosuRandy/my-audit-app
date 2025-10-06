@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+
+{% block title %}Field Communication - Audit Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2">
+                    <i class="fas fa-radio me-2"></i>Field Communication
+                </h1>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#quickMessageModal">
+                        <i class="fas fa-paper-plane me-2"></i>Quick Message
+                    </button>
+                    {% if current_user.role == 'auditor' %}
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#documentRequestModal">
+                        <i class="fas fa-file-alt me-2"></i>Request Documents
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Communication Statistics -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Active Audits</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ comm_stats.active_audits }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Messages</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ comm_stats.total_messages }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Requests</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ comm_stats.pending_requests }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-hourglass-half fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Evidence Files</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ comm_stats.evidence_files }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-upload fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Active Audits & Messages -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-clipboard-list me-2"></i>Active Audits & Communication
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if active_audits %}
+                    <div class="accordion" id="auditsAccordion">
+                        {% for audit in active_audits %}
+                        <div class="accordion-item mb-3">
+                            <h2 class="accordion-header" id="heading{{ loop.index }}">
+                                <button class="accordion-button {{ 'collapsed' if not loop.first }}" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" 
+                                        aria-expanded="{{ 'true' if loop.first else 'false' }}">
+                                    <div class="w-100">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>{{ audit.get('title', 'Untitled Audit') }}</strong>
+                                                <br><small class="text-muted">{{ audit.get('reference_number', 'No ref') }}</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge bg-{{ 'info' if audit.get('status') == 'in_progress' else 'warning' if audit.get('status') == 'assigned' else 'success' }}">
+                                                    {{ audit.get('status', '').replace('_', ' ').title() }}
+                                                </span>
+                                                {% if audit_messages.get(audit.get('id')) %}
+                                                <span class="badge bg-primary ms-2">{{ audit_messages.get(audit.get('id'))|length }} messages</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </button>
+                            </h2>
+                            <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {{ 'show' if loop.first }}" 
+                                 data-bs-parent="#auditsAccordion">
+                                <div class="accordion-body">
+                                    <!-- Audit Details -->
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <p><strong>Priority:</strong> 
+                                                <span class="badge bg-{{ 'danger' if audit.get('priority') == 'critical' else 'warning' if audit.get('priority') == 'high' else 'primary' }}">
+                                                    {{ audit.get('priority', 'medium').title() }}
+                                                </span>
+                                            </p>
+                                            <p><strong>Start Date:</strong> {{ audit.get('planned_start_date', 'Not set') }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="text-end">
+                                                <a href="{{ url_for('coordinate_engagement', audit_id=audit.get('id')) }}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-cogs me-1"></i>Coordinate
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Messages for this audit -->
+                                    {% if audit_messages.get(audit.get('id')) %}
+                                    <div class="messages-container" style="max-height: 250px; overflow-y: auto;">
+                                        <h6 class="text-muted">Recent Messages:</h6>
+                                        {% for message in audit_messages.get(audit.get('id'))[:5] %}
+                                        <div class="message-bubble mb-2 p-2 border-start border-4 {{ 'border-primary' if message.get('sender_id') == current_user.id else 'border-info' }} bg-light">
+                                            <div class="d-flex justify-content-between">
+                                                <small class="fw-bold">{{ message.get('sender_name', 'Unknown') }}</small>
+                                                <small class="text-muted">{{ message.get('created_at', '')[:16] if message.get('created_at') else '' }}</small>
+                                            </div>
+                                            <p class="mb-0 small">{{ message.get('message_content', '') }}</p>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <div class="text-center py-3">
+                                        <i class="fas fa-comment-slash fa-2x text-muted mb-2"></i>
+                                        <p class="text-muted small">No messages yet for this audit</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-clipboard fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Active Audits</h5>
+                        <p class="text-muted">You don't have any active audits requiring field communication.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Requests & Quick Actions -->
+        <div class="col-lg-4">
+            <!-- Document Requests -->
+            <div class="card shadow mb-4">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-file-alt me-2"></i>Document Requests
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if document_requests %}
+                    <div class="list-group list-group-flush">
+                        {% for request in document_requests[:5] %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <strong class="small">{{ request.get('document_type', 'Unknown') }}</strong>
+                                    <p class="mb-1 small text-muted">{{ request.get('description', '')[:60] }}{% if request.get('description', '')|length > 60 %}...{% endif %}</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>Due: {{ request.get('due_date', 'Not set') }}
+                                    </small>
+                                </div>
+                                <span class="badge bg-{{ 'warning' if request.get('status') == 'pending' else 'success' if request.get('status') == 'completed' else 'info' }}">
+                                    {{ request.get('status', '').title() }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if document_requests|length > 5 %}
+                    <div class="text-center mt-2">
+                        <small class="text-muted">And {{ document_requests|length - 5 }} more requests...</small>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-check fa-3x text-muted mb-3"></i>
+                        <p class="text-muted small">No document requests</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#quickMessageModal">
+                            <i class="fas fa-paper-plane me-2"></i>Send Quick Message
+                        </button>
+                        {% if current_user.role == 'auditor' %}
+                        <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#documentRequestModal">
+                            <i class="fas fa-file-alt me-2"></i>Request Documents
+                        </button>
+                        {% endif %}
+                        <a href="{{ url_for('messages') }}" class="btn btn-outline-info">
+                            <i class="fas fa-envelope me-2"></i>Formal Messages
+                        </a>
+                        <a href="{{ url_for('evidence_management') }}" class="btn btn-outline-warning">
+                            <i class="fas fa-file-upload me-2"></i>Evidence Files
+                        </a>
+                        <a href="{{ url_for('engagement_setup') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-cogs me-2"></i>Engagement Setup
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Message Modal -->
+<div class="modal fade" id="quickMessageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-paper-plane me-2"></i>Send Quick Message
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('send_quick_message') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="audit_id" class="form-label">Audit</label>
+                        <select class="form-select" name="audit_id" required>
+                            <option value="">Select audit...</option>
+                            {% for audit in active_audits %}
+                            <option value="{{ audit.get('id') }}">{{ audit.get('title', 'Untitled') }} ({{ audit.get('reference_number', 'No ref') }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="recipient_id" class="form-label">Send to</label>
+                        <select class="form-select" name="recipient_id" required>
+                            <option value="">Select recipient...</option>
+                            {% for user in all_users %}
+                            <option value="{{ user.get('id') }}">{{ user.get('first_name', '') }} {{ user.get('last_name', '') }} ({{ user.get('role', '').title() }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" name="subject" placeholder="Message subject">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="message_content" class="form-label">Message</label>
+                        <textarea class="form-control" name="message_content" rows="4" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="priority" class="form-label">Priority</label>
+                        <select class="form-select" name="priority">
+                            <option value="normal">Normal</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+
+                    <!-- Email Section -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="send_email" name="send_email">
+                            <label class="form-check-label" for="send_email">
+                                <i class="fas fa-envelope me-1"></i>Also send via email
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" id="email_fields" style="display: none;">
+                        <label for="email_address" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" name="email_address" placeholder="recipient@example.com">
+                        <div class="form-text">Leave blank to use recipient's system email address</div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-2"></i>Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Document Request Modal -->
+{% if current_user.role == 'auditor' %}
+<div class="modal fade" id="documentRequestModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-alt me-2"></i>Request Documents
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ url_for('send_document_request') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="audit_id" class="form-label">Audit</label>
+                        <select class="form-select" name="audit_id" required>
+                            <option value="">Select audit...</option>
+                            {% for audit in active_audits %}
+                            <option value="{{ audit.get('id') }}">{{ audit.get('title', 'Untitled') }} ({{ audit.get('reference_number', 'No ref') }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="document_type" class="form-label">Document Type</label>
+                        <select class="form-select" name="document_type" required>
+                            <option value="">Select type...</option>
+                            <option value="Financial Records">Financial Records</option>
+                            <option value="Policy Documents">Policy Documents</option>
+                            <option value="Transaction Logs">Transaction Logs</option>
+                            <option value="Process Documentation">Process Documentation</option>
+                            <option value="System Access Logs">System Access Logs</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3" required placeholder="Describe the specific documents you need..."></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="priority" class="form-label">Priority</label>
+                                <select class="form-select" name="priority">
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="low">Low</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="due_date" class="form-label">Due Date</label>
+                                <input type="date" class="form-control" name="due_date" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Email Section for Document Requests -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="send_request_email" name="send_request_email">
+                            <label class="form-check-label" for="send_request_email">
+                                <i class="fas fa-envelope me-1"></i>Also send request via email
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" id="request_email_fields" style="display: none;">
+                        <label for="request_email_address" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" name="request_email_address" placeholder="auditee@example.com">
+                        <div class="form-text">Leave blank to use auditee's system email address</div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-file-alt me-2"></i>Send Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- JavaScript for Email Toggle -->
+<script>
+    // Show/hide email fields for quick message
+    document.getElementById('send_email').addEventListener('change', function() {
+        const emailFields = document.getElementById('email_fields');
+        if (this.checked) {
+            emailFields.style.display = 'block';
+        } else {
+            emailFields.style.display = 'none';
+        }
+    });
+
+    // Show/hide email fields for document request
+    const requestEmailCheckbox = document.getElementById('send_request_email');
+    if (requestEmailCheckbox) {
+        requestEmailCheckbox.addEventListener('change', function() {
+            const emailFields = document.getElementById('request_email_fields');
+            if (this.checked) {
+                emailFields.style.display = 'block';
+            } else {
+                emailFields.style.display = 'none';
+            }
+        });
+    }
+</script>
+{% endblock %}

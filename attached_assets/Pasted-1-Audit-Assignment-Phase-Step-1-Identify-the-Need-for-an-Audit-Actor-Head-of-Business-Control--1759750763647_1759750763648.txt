@@ -1,0 +1,183 @@
+1️⃣ Audit Assignment Phase
+Step 1: Identify the Need for an Audit
+
+Actor: Head of Business Control (HBC)
+Trigger:
+
+Scheduled (annual/quarterly)
+
+Risk-based (based on prior findings or KPIs)
+
+Ad hoc (management or regulator request)
+
+System Action:
+
+HBC logs into the AMS (Audit Management System).
+
+Creates a New Audit Request with trigger details and purpose.
+
+Step 2: Define Audit Scope & Objectives
+
+Actor: HBC
+Action:
+Define key elements:
+
+Audit Scope (department, system, or process)
+
+Audit Objectives (compliance, performance, fraud, etc.)
+
+Criteria & Standards
+
+Expected Start & End Dates
+
+Resources & Tools
+
+System Action:
+
+HBC fills out “Audit Details Form” in the AMS.
+
+System stores the audit record as “Draft Audit Plan.”
+
+Step 3: Develop Audit Plan
+
+Actor: HBC
+Action:
+
+Create activity breakdown and timeline
+
+Prepare checklists and data request lists
+
+Submit plan to Director for review
+
+System Action:
+
+AMS sends “Audit Plan Approval Request” to Director.
+
+Step 4: Director Review & Approval
+
+Actor: Director
+Action:
+
+Review audit plan, scope, and methodology
+
+Approve or return with comments
+
+System Action:
+
+If approved → System updates status to “Audit Plan Approved.”
+
+If rejected → Returns to HBC with remarks.
+
+Step 5: Segregation of Duty & Assignment
+
+Actor: HBC
+Action:
+
+Select Auditor or Audit Team based on expertise
+
+Ensure no conflict of interest
+
+Assign in AMS
+
+System Action:
+
+AMS links auditor(s) to audit record
+
+Auto-notification (email/system alert) sent to assigned auditor(s)
+
+2️⃣ Auditor’s Preparation Phase
+Step 6: Acknowledge Assignment
+
+Actor: Auditor
+Action:
+
+Logs into AMS
+
+Reviews assignment details
+
+Clicks “Acknowledge Assignment”
+
+System Action:
+
+Updates audit status to “Acknowledged.”
+
+Step 7: Review Scope & Background
+
+Actor: Auditor
+Action:
+
+Studies the scope, objectives, and background info
+
+Reviews past reports, incidents, risk registers
+
+System Action:
+
+Allows document retrieval from AMS repository.
+
+Step 8: Notify Auditee & Request Documents
+
+Actor: Auditor
+Action:
+
+Sends notification to Auditee (through AMS)
+
+Requests relevant policies, logs, and access permissions
+
+Schedules tentative audit date
+
+System Action:
+
+AMS sends Audit Notification to Auditee with date & document checklist.
+
+3️⃣ Pre-Audit Planning & Approval Phase
+Step 9: Auditor Submits Detailed Plan
+
+Actor: Auditor
+Action:
+
+Drafts detailed fieldwork plan (steps, sampling method, timeline)
+
+Submits to HBC for validation
+
+System Action:
+
+Status changes to “Plan Pending Review.”
+
+Step 10: Review & Approve Auditor’s Plan
+
+Actor: Head of Business Control
+Action:
+
+Reviews methodology and schedule
+
+Approves or requests revisions
+
+System Action:
+
+If approved → System updates to “Ready for Fieldwork.”
+
+If revisions → Returns plan to auditor with comments.
+
+Step 11: Auditee Prepares for Audit
+
+Actor: Auditee
+Action:
+
+Acknowledges audit notification
+
+Submits all requested data/documents in AMS
+
+Grants necessary physical or system access
+
+Responds to preliminary clarifications
+
+System Action:
+
+AMS logs submissions and access confirmations.
+
+Status updates to “Pre-Audit Ready.”
+
+✅ End of Pre-Audit Stage
+
+At this point, all stakeholders (HBC, Director, Auditor, Auditee) have completed their preparatory duties.
+The system transitions the audit to the Fieldwork Execution Phase.

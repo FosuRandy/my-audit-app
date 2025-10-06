@@ -1,0 +1,53 @@
+modules = ["web", "python-3.11", "nodejs-20", "python3"]
+
+[nix]
+channel = "stable-25_05"
+packages = ["freetype", "glibcLocales", "openssl", "postgresql"]
+
+[deployment]
+deploymentTarget = "autoscale"
+run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Flask App"
+
+[[workflows.workflow]]
+name = "Flask App"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd /home/runner/workspace && gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
+waitForPort = 5000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 33885
+externalPort = 3001
+
+[[ports]]
+localPort = 38813
+externalPort = 3000
+
+[[ports]]
+localPort = 40875
+externalPort = 3002
+
+[agent]
+integrations = ["firebase_barebones_flask==1.0.0"]
+expertMode = true

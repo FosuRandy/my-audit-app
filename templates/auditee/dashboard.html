@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}Auditee Dashboard - Audit Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Audit Management Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar bg-light border-right">
+            <div class="position-sticky pt-3">
+                <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
+                    <span>Audit Management</span>
+                </h6>
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#overview">
+                            <i class="fas fa-tachometer-alt me-2"></i>
+                            Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('document_requests') }}">
+                            <i class="fas fa-file-text me-2"></i>
+                            Document Requests
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('field_communication') }}">
+                            <i class="fas fa-comments me-2"></i>
+                            Fieldwork Communication
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auditee_findings') }}">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Findings & Actions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('upload_evidence_page') }}">
+                            <i class="fas fa-upload me-2"></i>
+                            Evidence Upload
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('corrective_actions') }}">
+                            <i class="fas fa-tasks me-2"></i>
+                            Corrective Actions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auditee_reports') }}">
+                            <i class="fas fa-file-alt me-2"></i>
+                            My Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auditee_followup') }}">
+                            <i class="fas fa-clock me-2"></i>
+                            Follow-Up
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="fas fa-user-friends me-2"></i>Auditee Dashboard</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <a href="{{ url_for('auditee_findings') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-exclamation-triangle me-1"></i>View Findings
+                        </a>
+                        <a href="{{ url_for('upload_evidence_page') }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-upload me-1"></i>Upload Evidence
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Active Audits</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.active_audits or 0 }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pending Requests</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.pending_requests or 0 }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-file-text fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-danger shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Open Findings</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.open_findings or 0 }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Corrective Actions</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.corrective_actions or 0 }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-tasks fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Document Requests -->
+            <div class="row">
+                <div class="col-xl-8 col-lg-7">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Pending Document Requests</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>Audit</th>
+                                            <th>Requested By</th>
+                                            <th>Document Type</th>
+                                            <th>Due Date</th>
+                                            <th>Priority</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if pending_requests %}
+                                        {% for request in pending_requests %}
+                                        <tr>
+                                            <td>{{ request.get('audit_title', 'Unknown Audit') }}</td>
+                                            <td>{{ request.get('requested_by_name', 'Unknown') }}</td>
+                                            <td>{{ request.get('document_type', 'General Document') }}</td>
+                                            <td>{{ request.get('due_date', '')[:10] if request.get('due_date') else 'TBD' }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 'danger' if request.get('priority') == 'high' else 'warning' if request.get('priority') == 'medium' else 'info' }}">
+                                                    {{ request.get('priority', 'low').title() }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('view_document_request', request_id=request.get('id')) }}" class="btn btn-sm btn-primary">View</a>
+                                                <a href="{{ url_for('upload_evidence_page', finding_id=request.get('finding_id')) }}" class="btn btn-sm btn-success">Upload</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="6" class="text-center py-4">
+                                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                                <p class="text-muted">No pending document requests</p>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="col-xl-4 col-lg-5">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Quick Actions</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                <a href="{{ url_for('auditee_findings') }}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-exclamation-triangle mr-3"></i> View My Findings
+                                </a>
+                                <a href="{{ url_for('document_requests') }}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-file-text mr-3"></i> Document Requests
+                                </a>
+                                <a href="{{ url_for('upload_evidence_page') }}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-upload mr-3"></i> Upload Evidence
+                                </a>
+                                <a href="{{ url_for('corrective_actions') }}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-tasks mr-3"></i> Corrective Actions
+                                </a>
+                                <a href="#messages" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-comments mr-3"></i> Messages
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Communications -->
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Recent Communications</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                {% if recent_communications %}
+                                {% for comm in recent_communications %}
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-{{ 'primary' if comm.type == 'request' else 'success' if comm.type == 'response' else 'info' }}"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="timeline-title">{{ comm.get('subject', 'Communication') }}</h6>
+                                        <p class="timeline-description">{{ comm.get('message', '')[:50] }}...</p>
+                                        <small class="text-muted">{{ comm.get('timestamp', '')[:16] }}</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">No recent communications</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My Findings & Corrective Actions -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">My Findings & Corrective Actions</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>Finding Title</th>
+                                            <th>Audit</th>
+                                            <th>Severity</th>
+                                            <th>Status</th>
+                                            <th>Corrective Action</th>
+                                            <th>Due Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if my_findings %}
+                                        {% for finding in my_findings %}
+                                        <tr>
+                                            <td>{{ finding.get('title', 'Untitled Finding') }}</td>
+                                            <td>{{ finding.get('audit_title', 'Unknown Audit') }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 'danger' if finding.get('severity') == 'critical' else 'warning' if finding.get('severity') == 'high' else 'info' if finding.get('severity') == 'medium' else 'secondary' }}">
+                                                    {{ finding.get('severity', 'low').title() }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ 'warning' if finding.get('status') == 'open' else 'info' if finding.get('status') == 'in_progress' else 'success' if finding.get('status') == 'resolved' else 'secondary' }}">
+                                                    {{ finding.get('status', 'draft').replace('_', ' ').title() }}
+                                                </span>
+                                            </td>
+                                            <td>{{ finding.get('corrective_action', 'Not Assigned') }}</td>
+                                            <td>{{ finding.get('due_date', '')[:10] if finding.get('due_date') else 'TBD' }}</td>
+                                            <td>
+                                                <a href="{{ url_for('finding_detail', finding_id=finding.get('id')) }}" class="btn btn-sm btn-primary">View</a>
+                                                {% if finding.get('status') in ['open', 'in_progress'] %}
+                                                <a href="{{ url_for('upload_evidence_page', finding_id=finding.get('id')) }}" class="btn btn-sm btn-success">Upload Evidence</a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4">
+                                                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                                <p class="text-muted">No findings assigned to you</p>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -25px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.timeline-title {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.timeline-description {
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+</style>
+{% endblock %}

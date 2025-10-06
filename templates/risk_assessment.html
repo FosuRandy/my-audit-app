@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block title %}Risk Assessment - Audit Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2"><i class="fas fa-chart-line me-2"></i>Risk Assessment</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addRiskModal">
+                            <i class="fas fa-plus me-1"></i>Add Risk
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Heatmap -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Risk Heatmap</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="riskHeatmap" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Risk Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center mb-3">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Critical Risk</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ risk_stats.critical or 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                        </div>
+                    </div>
+                    <div class="row no-gutters align-items-center mb-3">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">High Risk</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ risk_stats.high or 5 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Medium Risk</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ risk_stats.medium or 12 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-info-circle fa-2x text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Risk Register -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Risk Register</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Risk ID</th>
+                                    <th>Risk Description</th>
+                                    <th>Department</th>
+                                    <th>Impact</th>
+                                    <th>Probability</th>
+                                    <th>Risk Level</th>
+                                    <th>Mitigation</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if risk_assessments %}
+                                {% for risk in risk_assessments %}
+                                <tr>
+                                    <td>{{ risk.get('risk_id', 'R' + loop.index|string) }}</td>
+                                    <td>{{ risk.get('description', 'Sample risk description') }}</td>
+                                    <td>{{ risk.get('department_name', 'Finance') }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if risk.get('impact') == 'high' else 'warning' if risk.get('impact') == 'medium' else 'info' }}">
+                                            {{ risk.get('impact', 'medium').title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if risk.get('probability') == 'high' else 'warning' if risk.get('probability') == 'medium' else 'info' }}">
+                                            {{ risk.get('probability', 'low').title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if risk.get('risk_level') == 'critical' else 'warning' if risk.get('risk_level') == 'high' else 'info' if risk.get('risk_level') == 'medium' else 'success' }}">
+                                            {{ risk.get('risk_level', 'medium').title() }}
+                                        </span>
+                                    </td>
+                                    <td>{{ risk.get('mitigation', 'Review and monitor') }}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editRiskModal{{ risk.get('id', loop.index) }}">
+                                            Edit
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-success">
+                                            Assess
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <!-- Sample risks for demonstration -->
+                                <tr>
+                                    <td>R001</td>
+                                    <td>Financial reporting accuracy risk</td>
+                                    <td>Finance</td>
+                                    <td><span class="badge bg-warning">Medium</span></td>
+                                    <td><span class="badge bg-info">Low</span></td>
+                                    <td><span class="badge bg-info">Medium</span></td>
+                                    <td>Monthly reconciliation review</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary">Edit</button>
+                                        <button type="button" class="btn btn-sm btn-success">Assess</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>R002</td>
+                                    <td>IT security and data protection</td>
+                                    <td>IT</td>
+                                    <td><span class="badge bg-danger">High</span></td>
+                                    <td><span class="badge bg-warning">Medium</span></td>
+                                    <td><span class="badge bg-warning">High</span></td>
+                                    <td>Regular security assessments</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary">Edit</button>
+                                        <button type="button" class="btn btn-sm btn-success">Assess</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>R003</td>
+                                    <td>Compliance with regulatory requirements</td>
+                                    <td>Legal</td>
+                                    <td><span class="badge bg-danger">High</span></td>
+                                    <td><span class="badge bg-warning">Medium</span></td>
+                                    <td><span class="badge bg-warning">High</span></td>
+                                    <td>Quarterly compliance review</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-primary">Edit</button>
+                                        <button type="button" class="btn btn-sm btn-success">Assess</button>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Risk Modal -->
+<div class="modal fade" id="addRiskModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Add New Risk
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('risk_assessment') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="risk_id" class="form-label">Risk ID *</label>
+                                <input type="text" class="form-control" id="risk_id" name="risk_id" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="department_id" class="form-label">Department *</label>
+                                <select class="form-select" id="department_id" name="department_id" required>
+                                    <option value="">Select Department</option>
+                                    {% for dept in departments or [] %}
+                                    <option value="{{ dept.id }}">{{ dept.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Risk Description *</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="impact" class="form-label">Impact *</label>
+                                <select class="form-select" id="impact" name="impact" required>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="probability" class="form-label">Probability *</label>
+                                <select class="form-select" id="probability" name="probability" required>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="risk_level" class="form-label">Risk Level</label>
+                                <select class="form-select" id="risk_level" name="risk_level">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="mitigation" class="form-label">Mitigation Strategy</label>
+                        <textarea class="form-control" id="mitigation" name="mitigation" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Risk</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Risk Heatmap Chart
+if (document.getElementById('riskHeatmap')) {
+    const ctx = document.getElementById('riskHeatmap').getContext('2d');
+    new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Risks',
+                data: [
+                    {x: 2, y: 3, r: 10}, // Low probability, Medium impact
+                    {x: 3, y: 4, r: 15}, // Medium probability, High impact
+                    {x: 4, y: 4, r: 20}, // High probability, High impact
+                    {x: 1, y: 2, r: 8}   // Low probability, Low impact
+                ],
+                backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Probability'
+                    },
+                    min: 0,
+                    max: 5
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Impact'
+                    },
+                    min: 0,
+                    max: 5
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `Risk Level: ${context.raw.r/5}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

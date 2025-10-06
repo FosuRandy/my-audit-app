@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Audit Details</h2>
+                <a href="{{ url_for('audit_list') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Audits
+                </a>
+            </div>
+
+            {% if audit %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ audit.title or 'Audit Details' }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Basic Information</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Audit ID:</strong></td>
+                                    <td>{{ audit.id or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Title:</strong></td>
+                                    <td>{{ audit.title or 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        <span class="badge badge-{{ 'success' if audit.status == 'completed' else 'primary' if audit.status == 'in_progress' else 'warning' }}">
+                                            {{ audit.status.replace('_', ' ').title() if audit.status else 'Draft' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Type:</strong></td>
+                                    <td>{{ audit.audit_type.replace('_', ' ').title() if audit.audit_type else 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Department:</strong></td>
+                                    <td>{{ audit.department or 'N/A' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Timeline</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Created:</strong></td>
+                                    <td>{{ audit.created_at.strftime('%Y-%m-%d') if audit.created_at else 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Start Date:</strong></td>
+                                    <td>{{ audit.start_date.strftime('%Y-%m-%d') if audit.start_date else 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>End Date:</strong></td>
+                                    <td>{{ audit.end_date.strftime('%Y-%m-%d') if audit.end_date else 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Assigned Auditor:</strong></td>
+                                    <td>{{ audit.auditor_name or 'Not assigned' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if audit.description %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Description</h6>
+                            <p class="text-muted">{{ audit.description }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if audit.objectives %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Objectives</h6>
+                            <p class="text-muted">{{ audit.objectives }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="btn-group" role="group">
+                                {% if current_user.role in ['director', 'head_of_business_control'] %}
+                                    <a href="{{ url_for('edit_audit', audit_id=audit.id) }}" class="btn btn-primary">
+                                        <i class="fas fa-edit"></i> Edit Audit
+                                    </a>
+                                {% endif %}
+                                {% if audit.status == 'in_progress' and current_user.role == 'auditor' %}
+                                    <a href="{{ url_for('create_finding', audit_id=audit.id) }}" class="btn btn-success">
+                                        <i class="fas fa-plus"></i> Add Finding
+                                    </a>
+                                {% endif %}
+                                <a href="{{ url_for('audit_findings', audit_id=audit.id) }}" class="btn btn-info">
+                                    <i class="fas fa-list"></i> View Findings
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i> Audit not found.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

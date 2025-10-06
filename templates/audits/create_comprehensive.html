@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% block title %}Create Audit Assignment{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <h2>Create New Audit Assignment</h2>
+            <p class="text-muted"><strong>Phase 1: Audit Assignment</strong> - Define audit scope, objectives, and assign resources</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-9">
+            <form method="POST" action="{{ url_for('create_audit_workflow') }}">
+                <!-- Step 1: Trigger Information -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-flag me-2"></i>Step 1: Identify Need for Audit
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="trigger_type" class="form-label">Trigger Type *</label>
+                                <select class="form-select" id="trigger_type" name="trigger_type" required>
+                                    <option value="scheduled">Scheduled (Annual/Quarterly)</option>
+                                    <option value="risk_based">Risk-Based (Prior Findings/KPIs)</option>
+                                    <option value="ad_hoc">Ad Hoc (Management/Regulator Request)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="trigger_details" class="form-label">Trigger Details</label>
+                                <input type="text" class="form-control" id="trigger_details" name="trigger_details" placeholder="e.g., Q1 2025 scheduled audit">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Basic Audit Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Basic Audit Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="title" class="form-label">Audit Title *</label>
+                                <input type="text" class="form-control" id="title" name="title" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="audit_type" class="form-label">Audit Type *</label>
+                                <select class="form-select" id="audit_type" name="audit_type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="compliance">Compliance Audit</option>
+                                    <option value="financial">Financial Audit</option>
+                                    <option value="operational">Operational Audit</option>
+                                    <option value="it_security">IT Security Audit</option>
+                                    <option value="quality">Quality Audit</option>
+                                    <option value="risk">Risk Assessment</option>
+                                    <option value="fraud">Fraud Investigation</option>
+                                    <option value="regulatory">Regulatory Audit</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Audit Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Brief overview of what this audit covers..."></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="priority" class="form-label">Priority Level *</label>
+                                <select class="form-select" id="priority" name="priority" required>
+                                    <option value="low">Low Priority</option>
+                                    <option value="medium" selected>Medium Priority</option>
+                                    <option value="high">High Priority</option>
+                                    <option value="critical">Critical Priority</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="department_id" class="form-label">Target Department *</label>
+                                <select class="form-select" id="department_id" name="department_id" required>
+                                    <option value="">Select Department</option>
+                                    {% for department in departments %}
+                                    <option value="{{ department['id'] }}">{{ department['name'] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Define Scope & Objectives -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-bullseye me-2"></i>Step 2: Define Audit Scope & Objectives
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="audit_scope" class="form-label">Audit Scope *</label>
+                            <textarea class="form-control" id="audit_scope" name="audit_scope" rows="3" required 
+                                      placeholder="What processes, departments, systems, or areas will be audited? Be specific about boundaries and limitations..."></textarea>
+                            <div class="form-text">Examples: Financial processes from Jan-Dec 2024, IT security controls for customer data, Procurement processes for contracts over $10K</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="audit_objectives" class="form-label">Audit Objectives *</label>
+                            <textarea class="form-control" id="audit_objectives" name="audit_objectives" rows="3" required 
+                                      placeholder="What is the purpose of this audit? What questions should it answer?"></textarea>
+                            <div class="form-text">Examples: Ensure compliance with SOX controls, Assess effectiveness of cybersecurity measures, Evaluate procurement efficiency</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="audit_criteria" class="form-label">Audit Criteria & Standards</label>
+                            <textarea class="form-control" id="audit_criteria" name="audit_criteria" rows="3" 
+                                      placeholder="What standards, regulations, or criteria will be used to evaluate compliance?"></textarea>
+                            <div class="form-text">Examples: COSO framework, ISO 27001 standards, Company policy XYZ, Federal regulation ABC</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="resources_needed" class="form-label">Resources & Tools Needed</label>
+                            <textarea class="form-control" id="resources_needed" name="resources_needed" rows="2" 
+                                      placeholder="Special resources, tools, or access required for this audit..."></textarea>
+                            <div class="form-text">Examples: Database access, Document review tools, External expert consultation, Travel budget</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Develop Audit Plan -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-clipboard-list me-2"></i>Step 3: Develop Audit Plan
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="audit_plan" class="form-label">Audit Plan Overview</label>
+                            <textarea class="form-control" id="audit_plan" name="audit_plan" rows="4" 
+                                      placeholder="High-level audit approach and strategy..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="activity_breakdown" class="form-label">Activity Breakdown & Timeline</label>
+                            <textarea class="form-control" id="activity_breakdown" name="activity_breakdown" rows="4" 
+                                      placeholder="List of audit activities and their sequence..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="audit_checklist" class="form-label">Audit Checklist</label>
+                            <textarea class="form-control" id="audit_checklist" name="audit_checklist" rows="3" 
+                                      placeholder="Key items to verify during the audit..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="data_request_list" class="form-label">Data Request List</label>
+                            <textarea class="form-control" id="data_request_list" name="data_request_list" rows="3" 
+                                      placeholder="Documents and data that will be needed from the auditee..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-calendar me-2"></i>Audit Timeline
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="planned_start_date" class="form-label">Expected Start Date *</label>
+                                <input type="date" class="form-control" id="planned_start_date" name="planned_start_date" required>
+                                <div class="form-text">When should fieldwork begin?</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="planned_end_date" class="form-label">Expected End Date *</label>
+                                <input type="date" class="form-control" id="planned_end_date" name="planned_end_date" required>
+                                <div class="form-text">Target completion date</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{{ url_for('head_of_business_control_dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Save as Draft
+                    </button>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Next Steps:</strong> After saving, you can submit this audit plan to the Director for approval. Once approved, you'll assign an auditor.
+                </div>
+            </form>
+        </div>
+        
+        <div class="col-md-3">
+            <!-- Assignment Process Guide -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-route me-1"></i>Assignment Process
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline-item">
+                        <span class="badge bg-primary">1</span>
+                        <small><strong>Assignment</strong><br>Define scope & assign auditor</small>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="badge bg-secondary">2</span>
+                        <small><strong>Acknowledgment</strong><br>Auditor confirms receipt</small>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="badge bg-secondary">3</span>
+                        <small><strong>Planning</strong><br>Auditor prepares audit plan</small>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="badge bg-secondary">4</span>
+                        <small><strong>Approval</strong><br>Supervisor approves plan</small>
+                    </div>
+                    <div class="timeline-item">
+                        <span class="badge bg-secondary">5</span>
+                        <small><strong>Execution</strong><br>Audit fieldwork begins</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignment Tips -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-lightbulb me-1"></i>Assignment Tips
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled small">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-1"></i>
+                            <strong>Be Specific:</strong> Clear scope prevents scope creep
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-1"></i>
+                            <strong>Match Skills:</strong> Align auditor expertise with audit type
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-1"></i>
+                            <strong>Avoid Conflicts:</strong> Consider relationships between auditor/auditee
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-1"></i>
+                            <strong>Set Timeline:</strong> Allow sufficient time for thorough work
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 0.75rem;
+}
+
+.timeline-item .badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('planned_start_date').setAttribute('min', today);
+    document.getElementById('planned_end_date').setAttribute('min', today);
+    
+    // Update end date minimum when start date changes
+    document.getElementById('planned_start_date').addEventListener('change', function() {
+        const startDate = this.value;
+        document.getElementById('planned_end_date').setAttribute('min', startDate);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Create Risk Assessment{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-shield-alt mr-2"></i>Create Risk Assessment
+        </h1>
+        <a href="/risk-assessment" class="btn btn-secondary">
+            <i class="fas fa-arrow-left mr-1"></i>Back to Risk Assessment
+        </a>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <form method="POST" action="/risk-assessment/create">
+                        <div class="mb-3">
+                            <label for="risk_description" class="form-label">Risk Description</label>
+                            <textarea class="form-control" id="risk_description" name="risk_description" rows="4" required 
+                                placeholder="Describe the identified risk in detail..."></textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="department_id" class="form-label">Department</label>
+                                    <select class="form-control" id="department_id" name="department_id" required>
+                                        <option value="">Select Department</option>
+                                        {% for dept in departments %}
+                                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="risk_category" class="form-label">Risk Category</label>
+                                    <select class="form-control" id="risk_category" name="risk_category" required>
+                                        <option value="">Select Category</option>
+                                        <option value="operational">Operational</option>
+                                        <option value="financial">Financial</option>
+                                        <option value="compliance">Compliance</option>
+                                        <option value="strategic">Strategic</option>
+                                        <option value="reputational">Reputational</option>
+                                        <option value="technology">Technology</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="impact_level" class="form-label">Impact Level</label>
+                                    <select class="form-control" id="impact_level" name="impact_level" required>
+                                        <option value="">Select Impact</option>
+                                        <option value="low">Low</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="high">High</option>
+                                        <option value="critical">Critical</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="likelihood_level" class="form-label">Likelihood Level</label>
+                                    <select class="form-control" id="likelihood_level" name="likelihood_level" required>
+                                        <option value="">Select Likelihood</option>
+                                        <option value="rare">Rare</option>
+                                        <option value="unlikely">Unlikely</option>
+                                        <option value="possible">Possible</option>
+                                        <option value="likely">Likely</option>
+                                        <option value="almost_certain">Almost Certain</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="mitigation_strategy" class="form-label">Mitigation Strategy</label>
+                            <textarea class="form-control" id="mitigation_strategy" name="mitigation_strategy" rows="3" 
+                                placeholder="Describe strategies to mitigate this risk..."></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="button" class="btn btn-secondary mr-2" onclick="history.back()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Create Risk Assessment</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
