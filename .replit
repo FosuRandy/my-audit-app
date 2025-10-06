@@ -29,16 +29,12 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd /home/runner/workspace && gunicorn --bind 0.0.0.0:5000 --reuse-port --reload main:app"
+args = "gunicorn --bind=0.0.0.0:5000 --reuse-port main:app"
 waitForPort = 5000
 
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 33885
-externalPort = 3001
 
 [[ports]]
 localPort = 37619
@@ -47,6 +43,10 @@ externalPort = 3002
 [[ports]]
 localPort = 38813
 externalPort = 3000
+
+[[ports]]
+localPort = 43905
+externalPort = 3001
 
 [agent]
 integrations = ["firebase_barebones_flask==1.0.0"]
