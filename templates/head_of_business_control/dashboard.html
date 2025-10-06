@@ -309,7 +309,7 @@
                             </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form method="POST" action="{{ url_for('assign_auditor_to_audit', audit_id=audit.get('id')) }}">
+                        <form method="POST" action="{{ url_for('assign_auditor', audit_id=audit.get('id')) }}">
                             <div class="modal-body">
                                 <div class="mb-3">
                                     <label for="auditor{{ audit.get('id') }}" class="form-label">Select Auditor *</label>

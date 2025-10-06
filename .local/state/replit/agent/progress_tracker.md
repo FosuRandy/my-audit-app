@@ -44,3 +44,5 @@
 [x] 44. Fixed director dashboard 500 error - corrected template variable from audit.id to plan.id (October 6, 2025)
 [x] 45. Fixed HBC dashboard 500 error - removed non-existent edit_audit_plan route reference (October 6, 2025)
 [x] 46. Both director and HBC dashboards now working without errors
+[x] 47. Fixed HBC dashboard assign auditor modal 500 error - corrected endpoint from 'assign_auditor_to_audit' to 'assign_auditor' (October 6, 2025)
+[x] 48. HBC dashboard fully functional - all modals and forms working correctly
