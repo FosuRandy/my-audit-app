@@ -969,7 +969,7 @@ def create_user():
         
         if not firebase_user:
             flash('Error creating user account.', 'error')
-            return redirect(url_for('manage_users'))
+            return redirect(url_for('manage_users_page'))
         
         # Create user record in Firestore
         user_data = {
@@ -992,7 +992,7 @@ def create_user():
     except Exception as e:
         flash(f'Error creating user: {str(e)}', 'error')
     
-    return redirect(url_for('manage_users'))
+    return redirect(url_for('manage_users_page'))
 
 # Department Management Routes  
 @app.route('/departments')
