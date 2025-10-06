@@ -46,3 +46,11 @@
 [x] 46. Both director and HBC dashboards now working without errors
 [x] 47. Fixed HBC dashboard assign auditor modal 500 error - corrected endpoint from 'assign_auditor_to_audit' to 'assign_auditor' (October 6, 2025)
 [x] 48. HBC dashboard fully functional - all modals and forms working correctly
+[x] 49. Replaced modal-based auditor assignment with dedicated page route (October 6, 2025)
+[x] 50. Created GET/POST route for /assign-auditor/<audit_id> to show assignment page and process submissions
+[x] 51. Updated HBC dashboard to link to assignment page instead of opening modal
+[x] 52. Enhanced approve_plan route to save director feedback for both approved and rejected plans
+[x] 53. Added "Director Feedback" column to HBC dashboard showing feedback for each approved audit
+[x] 54. Updated assign_auditor.html template to work with dict-based data structure
+[x] 55. Removed modal code from HBC dashboard - cleaner UX with dedicated page navigation
+[x] 56. All features tested and working - application running successfully on port 5000
