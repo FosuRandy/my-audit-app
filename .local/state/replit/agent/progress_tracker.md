@@ -54,3 +54,10 @@
 [x] 54. Updated assign_auditor.html template to work with dict-based data structure
 [x] 55. Removed modal code from HBC dashboard - cleaner UX with dedicated page navigation
 [x] 56. All features tested and working - application running successfully on port 5000
+[x] 57. Added auditee dropdown field to auditor assignment form - both auditor and auditee are now required (October 6, 2025)
+[x] 58. Updated assign_auditor route to fetch and pass available auditees to template
+[x] 59. Enhanced POST handler to require auditee_id and store it in audit data
+[x] 60. Added auditee notification when assigned to an audit
+[x] 61. Updated HBC dashboard to display list of available auditors at bottom of page
+[x] 62. Enhanced HBC dashboard route to pass available_auditors and improved stats calculation
+[x] 63. Both features tested and working - auditor assignment now captures both auditor and auditee
