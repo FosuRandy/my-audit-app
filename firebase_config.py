@@ -33,11 +33,20 @@ firebase_config = {
 # Initialize Firebase or Mock implementation
 if FIREBASE_AVAILABLE:
     try:
-        # Set project ID environment variable for Firestore
-        os.environ['GOOGLE_CLOUD_PROJECT'] = firebase_config["projectId"]
-        firebase_admin.initialize_app(options={'projectId': firebase_config["projectId"]})
-        db = firestore.client()
-        print("Firebase Admin initialized successfully")
+        # Check for service account key in environment
+        service_account_key = os.environ.get('FIREBASE_SERVICE_ACCOUNT_KEY')
+        
+        if service_account_key:
+            # Initialize with service account credentials
+            cred_dict = json.loads(service_account_key)
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred)
+            db = firestore.client()
+            print("Firebase Admin initialized successfully with service account")
+        else:
+            # Fallback: try to initialize without credentials (will fail, triggering mock mode)
+            print("No Firebase service account key found, using mock implementation")
+            FIREBASE_AVAILABLE = False
     except Exception as e:
         print(f"Firebase initialization error: {e}, using mock implementation")
         FIREBASE_AVAILABLE = False
