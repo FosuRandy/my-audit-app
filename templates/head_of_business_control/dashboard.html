@@ -263,6 +263,7 @@
                                             <th>Audit Title</th>
                                             <th>Department</th>
                                             <th>Approved Date</th>
+                                            <th>Director Feedback</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -274,17 +275,22 @@
                                             <td>{{ audit.get('department_name', 'N/A') }}</td>
                                             <td>{{ audit.get('approved_at', 'N/A')[:10] if audit.get('approved_at') else 'N/A' }}</td>
                                             <td>
-                                                <button type="button" class="btn btn-sm btn-primary" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#assignAuditorModal{{ audit.get('id') }}">
+                                                {% if audit.get('director_feedback') %}
+                                                <small class="text-success">{{ audit.get('director_feedback') }}</small>
+                                                {% else %}
+                                                <small class="text-muted">No feedback</small>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('assign_auditor', audit_id=audit.get('id')) }}" class="btn btn-sm btn-primary">
                                                     <i class="fas fa-user-tie me-1"></i>Assign Auditor
-                                                </button>
+                                                </a>
                                             </td>
                                         </tr>
                                         {% endfor %}
                                         {% else %}
                                         <tr>
-                                            <td colspan="4" class="text-center py-4">
+                                            <td colspan="5" class="text-center py-4">
                                                 <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                                                 <p class="text-muted">No approved audits pending assignment</p>
                                             </td>
@@ -297,60 +303,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Assignment Modals -->
-            {% for audit in director_approved_audits %}
-            <div class="modal fade" id="assignAuditorModal{{ audit.get('id') }}" tabindex="-1" aria-labelledby="assignAuditorModalLabel{{ audit.get('id') }}" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="assignAuditorModalLabel{{ audit.get('id') }}">
-                                <i class="fas fa-user-tie me-2"></i>Assign Auditor to: {{ audit.get('title', 'Untitled Audit') }}
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form method="POST" action="{{ url_for('assign_auditor', audit_id=audit.get('id')) }}">
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label for="auditor{{ audit.get('id') }}" class="form-label">Select Auditor *</label>
-                                    <select class="form-select" id="auditor{{ audit.get('id') }}" name="auditor_id" required>
-                                        <option value="">-- Choose an Auditor --</option>
-                                        {% for auditor in auditors %}
-                                        <option value="{{ auditor.get('id') }}">
-                                            {{ auditor.get('first_name', '') }} {{ auditor.get('last_name', '') }} 
-                                            ({{ auditor.get('department_name', 'N/A') }})
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="auditee{{ audit.get('id') }}" class="form-label">Select Auditee (Optional)</label>
-                                    <select class="form-select" id="auditee{{ audit.get('id') }}" name="auditee_id">
-                                        <option value="">-- Choose an Auditee --</option>
-                                        {% for auditee in auditees %}
-                                        <option value="{{ auditee.get('id') }}">
-                                            {{ auditee.get('first_name', '') }} {{ auditee.get('last_name', '') }}
-                                            ({{ auditee.get('department_name', 'N/A') }})
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="alert alert-info">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    <strong>Note:</strong> The auditor will be notified and asked to acknowledge the assignment.
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-check me-2"></i>Assign Auditor
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
 
             <!-- Auditor Assignment -->
             <div class="row">

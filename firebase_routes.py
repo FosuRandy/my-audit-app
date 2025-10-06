@@ -563,40 +563,72 @@ def approve_audit_plan(audit_id):
     
     return redirect(url_for('dashboard'))
 
-@app.route('/assign-auditor/<audit_id>', methods=['POST'])
+@app.route('/assign-auditor/<audit_id>', methods=['GET', 'POST'])
 @login_required
 @role_required('head_of_business_control')
 def assign_auditor(audit_id):
     """Head of Business Control assigns auditor"""
-    try:
-        audit_data = {
-            'auditor_id': request.form['auditor_id'],
-            'auditee_id': request.form['auditee_id'],
-            'status': 'assigned',
-            'auditor_assigned_at': datetime.now().isoformat()
-        }
-        
-        if audit_id in DATA_STORE['audits']:
-            DATA_STORE['audits'][audit_id].update(audit_data)
-            
-            # Notify auditor
-            create_notification(
-                user_id=request.form['auditor_id'],
-                title='New Audit Assignment',
-                message=f'You have been assigned to an audit. Please acknowledge this assignment.',
-                notification_type='audit_assigned',
-                related_entity_type='audit',
-                related_entity_id=audit_id
-            )
-            
-        log_audit_action('assign_auditor', 'audit', audit_id, f'Auditor assigned to audit')
-        
-        flash('Auditor assigned successfully.', 'success')
-        
-    except Exception as e:
-        flash(f'Error assigning auditor: {str(e)}', 'error')
+    audit = DATA_STORE.get('audits', {}).get(audit_id)
     
-    return redirect(url_for('dashboard'))
+    if not audit:
+        flash('Audit not found.', 'error')
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        try:
+            audit_data = {
+                'auditor_id': request.form['auditor_id'],
+                'auditee_id': request.form.get('auditee_id', ''),
+                'status': 'assigned',
+                'auditor_assigned_at': datetime.now().isoformat()
+            }
+            
+            if audit_id in DATA_STORE['audits']:
+                DATA_STORE['audits'][audit_id].update(audit_data)
+                
+                # Notify auditor
+                create_notification(
+                    user_id=request.form['auditor_id'],
+                    title='New Audit Assignment',
+                    message=f'You have been assigned to an audit. Please acknowledge this assignment.',
+                    notification_type='audit_assigned',
+                    related_entity_type='audit',
+                    related_entity_id=audit_id
+                )
+                
+            log_audit_action('assign_auditor', 'audit', audit_id, f'Auditor assigned to audit')
+            
+            flash('Auditor assigned successfully.', 'success')
+            
+        except Exception as e:
+            flash(f'Error assigning auditor: {str(e)}', 'error')
+        
+        return redirect(url_for('dashboard'))
+    
+    # GET request - show assignment page
+    # Enrich audit data
+    dept = DATA_STORE.get('departments', {}).get(audit.get('department_id'))
+    if dept:
+        audit['department_name'] = dept.get('name', 'N/A')
+    
+    # Get available auditors
+    auditors = [user for user in DATA_STORE['users'].values() 
+               if user.get('role') == 'auditor' and user.get('is_active', True)]
+    
+    # Enrich auditors with department names
+    for auditor in auditors:
+        dept_id = auditor.get('department_id')
+        if dept_id and dept_id in DATA_STORE.get('departments', {}):
+            auditor['department_name'] = DATA_STORE['departments'][dept_id].get('name', 'N/A')
+    
+    user = get_current_user()
+    notifications = [n for n in DATA_STORE.get('notifications', {}).values() if n.get('user_id') == user['id']]
+    
+    return render_template('head_of_business_control/assign_auditor.html',
+                         audit=audit,
+                         available_auditors=auditors,
+                         current_user=user,
+                         notifications=notifications)
 
 @app.route('/assign-auditors')
 @login_required
@@ -1941,22 +1973,44 @@ def approve_plan(plan_id):
     """Approve audit plan"""
     plan = DATA_STORE.get('audits', {}).get(plan_id)
     if plan:
-        plan['status'] = 'director_approved'
-        plan['approved_by'] = get_current_user()['id']
-        plan['approved_at'] = datetime.now().isoformat()
+        decision = request.form.get('decision', 'approve')
+        director_feedback = request.form.get('director_feedback', '')
         
-        # Notify HBC that plan is approved
-        create_notification(
-            user_role='head_of_business_control',
-            title='Audit Plan Approved',
-            message=f'Director approved audit plan: "{plan.get("title", "")}". You can now assign an auditor.',
-            notification_type='plan_approved',
-            related_entity_type='audit',
-            related_entity_id=plan_id
-        )
-        
-        flash('Audit plan approved successfully.', 'success')
-        log_audit_action('approve_plan', 'audit', plan_id, 'Audit plan approved by director')
+        if decision == 'approve':
+            plan['status'] = 'director_approved'
+            plan['approved_by'] = get_current_user()['id']
+            plan['approved_at'] = datetime.now().isoformat()
+            plan['director_feedback'] = director_feedback
+            
+            # Notify HBC that plan is approved
+            create_notification(
+                user_role='head_of_business_control',
+                title='Audit Plan Approved',
+                message=f'Director approved audit plan: "{plan.get("title", "")}". You can now assign an auditor.',
+                notification_type='plan_approved',
+                related_entity_type='audit',
+                related_entity_id=plan_id
+            )
+            
+            flash('Audit plan approved successfully.', 'success')
+            log_audit_action('approve_plan', 'audit', plan_id, 'Audit plan approved by director')
+        else:
+            # Request changes
+            plan['status'] = 'changes_requested'
+            plan['director_feedback'] = director_feedback
+            
+            # Notify HBC that changes are requested
+            create_notification(
+                user_role='head_of_business_control',
+                title='Audit Plan - Changes Requested',
+                message=f'Director requested changes to audit plan: "{plan.get("title", "")}". Please review the feedback.',
+                notification_type='changes_requested',
+                related_entity_type='audit',
+                related_entity_id=plan_id
+            )
+            
+            flash('Changes requested. HBC has been notified.', 'info')
+            log_audit_action('request_changes', 'audit', plan_id, 'Director requested changes to audit plan')
     else:
         flash('Audit plan not found.', 'error')
     
