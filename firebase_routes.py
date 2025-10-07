@@ -1000,9 +1000,9 @@ def create_user():
 @role_required('head_of_business_control', 'director')
 def departments():
     """Department management with improved styling"""
-    # Use DATA_STORE for faster loading
-    all_departments = list(DATA_STORE.get('departments', {}).values())
-    all_users = list(DATA_STORE.get('users', {}).values())
+    # Load departments from Firestore
+    all_departments = dept_model.get_all()
+    all_users = user_model.get_all()
     
     # Enrich department data with user counts
     for dept in all_departments:
@@ -1025,10 +1025,7 @@ def create_department():
             'head_name': request.form.get('head_name', '')
         }
         
-        dept_id = str(uuid.uuid4())
-        dept_data['id'] = dept_id
-        dept_data['created_at'] = datetime.now()
-        DATA_STORE['departments'][dept_id] = dept_data
+        dept_id = dept_model.create_department(dept_data)
         log_audit_action('create', 'department', dept_id, f'Department created: {request.form["name"]}')
         
         flash('Department created successfully.', 'success')
@@ -1593,20 +1590,20 @@ def create_new_department():
 def delete_department(department_id):
     """Delete department - permanently removes department from system"""
     try:
-        department = DATA_STORE.get('departments', {}).get(department_id)
+        department = dept_model.get(department_id)
         if not department:
             flash('Department not found.', 'error')
             return redirect(url_for('departments'))
         
         # Check if department has users
-        dept_users = [u for u in DATA_STORE.get('users', {}).values() if u.get('department_id') == department_id]
+        dept_users = user_model.query('department_id', '==', department_id)
         
         if dept_users:
             flash(f'Cannot delete department with {len(dept_users)} assigned users. Please reassign users first.', 'error')
             return redirect(url_for('departments'))
         
-        # Delete from DATA_STORE
-        del DATA_STORE['departments'][department_id]
+        # Delete from Firestore
+        dept_model.delete(department_id)
         
         log_audit_action('delete', 'department', department_id, f'Department permanently deleted: {department.get("name")}')
         flash('Department deleted successfully.', 'success')
