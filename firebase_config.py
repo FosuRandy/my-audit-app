@@ -55,20 +55,10 @@ if not FIREBASE_AVAILABLE:
     # Create comprehensive mock database for development
     import uuid
     from datetime import datetime
+    from data_store import DATA_STORE
     
-    # In-memory storage for development
-    mock_data_store = {
-        'users': {},
-        'departments': {},
-        'audits': {},
-        'risk_assessments': {},
-        'findings': {},
-        'corrective_actions': {},
-        'messages': {},
-        'evidence_files': {},
-        'audit_reports': {},
-        'audit_logs': {}
-    }
+    # Use shared DATA_STORE instead of separate mock_data_store
+    mock_data_store = DATA_STORE
     
     class MockFirestore:
         def collection(self, name):
@@ -172,8 +162,29 @@ def authenticate_user(email, password):
                 "refreshToken": f"test-refresh-{email.split('@')[0]}"
             }
         
+        # Check if user exists in DATA_STORE (for development/mock mode)
+        if not FIREBASE_AVAILABLE:
+            from data_store import find_user_by_email
+            user = find_user_by_email(email)
+            if user:
+                # Check if password matches temporary_password
+                if user.get('temporary_password') == password:
+                    print(f"Development: Authenticating user {email} with temporary password")
+                    return {
+                        "localId": user.get('firebase_uid', f"mock-{user['id']}"),
+                        "email": email,
+                        "idToken": f"mock-token-{user['id']}",
+                        "refreshToken": f"mock-refresh-{user['id']}"
+                    }
+                else:
+                    print(f"Development: Invalid password for user {email}")
+                    return None
+            else:
+                print(f"Development: User {email} not found in DATA_STORE")
+                return None
+        
         # For production users, try Firebase authentication
-        if REQUESTS_AVAILABLE:
+        if REQUESTS_AVAILABLE and FIREBASE_AVAILABLE:
             api_key = firebase_config["apiKey"]
             url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={api_key}"
             payload = {
