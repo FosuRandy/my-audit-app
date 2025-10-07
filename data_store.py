@@ -48,13 +48,8 @@ def get_data_store():
     return DATA_STORE
 
 def find_user_by_email(email):
-    """Find user by email address - checks both DATA_STORE and Firestore"""
-    # First check DATA_STORE (for test users and backwards compatibility)
-    for user_id, user in DATA_STORE['users'].items():
-        if user.get('email') == email:
-            return user
-    
-    # If not found in DATA_STORE and Firebase is available, check Firestore
+    """Find user by email address - prioritizes Firestore over DATA_STORE"""
+    # First check Firestore if available
     try:
         from firebase_config import FIREBASE_AVAILABLE
         if FIREBASE_AVAILABLE:
@@ -65,6 +60,11 @@ def find_user_by_email(email):
                 return user
     except Exception as e:
         print(f"Error checking Firestore for user: {e}")
+    
+    # Fallback to DATA_STORE (for test users and backwards compatibility)
+    for user_id, user in DATA_STORE['users'].items():
+        if user.get('email') == email:
+            return user
     
     return None
 

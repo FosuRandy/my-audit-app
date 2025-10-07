@@ -946,9 +946,9 @@ def report_library():
 @role_required('head_of_business_control', 'director')
 def users():
     """User management - view-only for directors"""
-    # Use DATA_STORE for faster loading
-    users = list(DATA_STORE.get('users', {}).values())
-    departments = list(DATA_STORE.get('departments', {}).values())
+    # Load from Firestore
+    users = user_model.get_all()
+    departments = dept_model.get_all()
     return render_template('admin/users.html', users=users, departments=departments)
 
 @app.route('/users/create', methods=['POST'])
@@ -1549,9 +1549,9 @@ def toggle_user_status(user_id):
 def delete_user(user_id):
     """Delete user"""
     try:
-        user = DATA_STORE['users'].get(user_id)
+        user = user_model.get(user_id)
         if user:
-            del DATA_STORE['users'][user_id]
+            user_model.delete(user_id)
             log_audit_action('delete_user', 'user', user_id, f'User deleted: {user.get("email")}')
             flash('User deleted successfully.', 'success')
         else:
