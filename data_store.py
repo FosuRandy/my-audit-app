@@ -48,10 +48,24 @@ def get_data_store():
     return DATA_STORE
 
 def find_user_by_email(email):
-    """Find user by email address"""
+    """Find user by email address - checks both DATA_STORE and Firestore"""
+    # First check DATA_STORE (for test users and backwards compatibility)
     for user_id, user in DATA_STORE['users'].items():
         if user.get('email') == email:
             return user
+    
+    # If not found in DATA_STORE and Firebase is available, check Firestore
+    try:
+        from firebase_config import FIREBASE_AVAILABLE
+        if FIREBASE_AVAILABLE:
+            from firebase_models import UserModel
+            user_model = UserModel()
+            user = user_model.get_user_by_email(email)
+            if user:
+                return user
+    except Exception as e:
+        print(f"Error checking Firestore for user: {e}")
+    
     return None
 
 def add_audit_log(user_id, action, entity_type, entity_id=None, details=None, ip_address=None, user_agent=None):

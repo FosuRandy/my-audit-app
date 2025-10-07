@@ -81,3 +81,6 @@
 [x] 81. User enabled Email/Password authentication in Firebase Console (October 7, 2025)
 [x] 82. Application restarted - Firebase Authentication now fully configured
 [x] 83. System ready for testing - departments, users, and authentication should now work properly
+[x] 84. Fixed user lookup issue - updated find_user_by_email to check Firestore when Firebase is enabled (October 7, 2025)
+[x] 85. Fixed get_current_user to check Firestore for session validation
+[x] 86. Application restarted with Firestore integration fixes - login should now work for newly created users
