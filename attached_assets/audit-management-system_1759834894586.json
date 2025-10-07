@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "audit-management-system-271ea",
+  "private_key_id": "8ec04adae5b5f5250003516720da217d597212f4",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDHhna9Hk96vftA\nFgQZvs9WgQ9goMuHG93FN4AX5c/t3aOy3k6OebR19gbK5E0xMMP5qtwMPFedKywL\nzMKvnRRgpPI1HwiJA349IQIzhF2vUO6rx+tOsNVBC0NhFQK+bBM5GWlxn/S/EFUR\nd6YBUAnNT9uwOGfq58XkWAQm3d4O+l8AwJq05Dz34Qol9hgxHwHegbUNUVbsr+sK\nDT2cyUJpKLVHYGatI8+C37RsYkR0tVMVXo6bCJJoMce+7Up4N1iiKhXEApsqScEZ\nXvIPQ/e6LmOh2RMa5eaulxA9DCGhd0mLa7yQOkdHneK5yVz1ibnu/TAK7uYLEmP3\nfD5yjsJ/AgMBAAECggEAHQomjQb01W4CPAUYSrD5V2NIXC17Aeqd3/7gb1n85eds\n1HNDprvy9no86dnJnF+3HkbuaP99Vvw6GGuQaGPp29kWAYJHST3PaVE9E0dwJTyX\nyDu8NUNKfoGHqIEY2aM8NwLKVIXN5uMXJoguCqHeE1pMpLzI7ykVpdLjo86F69Lm\nCYTOEsTlvzLXcB7PgSyD5di2r3JNasKTOFLCtj0poJ6aKyT8tsGhiNptiHMJORnt\n8A0LKunbbGlLhIjoSHG+EjjG+x8IhIgNBLUmRIW4oEviPXCTUidKYKU3jILmPzBw\nBYaWjEjFF5Q4CYF7aDhGuzsQWXB+jQDMSb/gY6b77QKBgQDwCMJvIdEkEJ+2k4Oz\nmcNaDoN209RYxjzOIxAT57lWVCcsBnsbTFyu7aEIavjqLmnvXGhBZfJfF7W5gxPt\nuAJxYDK8Bad6NCDvHrVHDl/WN3yY0VAhab0H4F7Z7y8YLG594YInF19VsqrNvg5K\nUTv2T0Xj+FTsq0njWwIN42PWmwKBgQDUy+2YS7K4LKhNcMH6vX7CK/PefKpk2K9d\nuGJbX0M236h6Wfjgg3v8HBir5sW5+jP1WWrNVgRbbk9RS2rfZ7SnmPRFqFkSZl6r\nqP0HgvOIQvq5pILbsRAOpaaG6GNYAuljhHuqFmqIlHHWaqCZT/+xJTQKc8Lqqqq+\ndaMukooP7QKBgQDOn8u33JVrBUBm6x8BGMjYGgxC2uA9NxCapgYuDFg3nyNFO6L3\ngcl676WiWGtDM4cPfC1mtnpoL0HImrQp+y9nJ1clEXz0rjD3hiioLRCEl6kS54Oh\n76LAR/1+fu28Umsew2PFgNIZND7h8svcX4dNZToVnuyD+oMVSn8/M1H7JwKBgDj1\nVOV87ZuKqIoB8ooxCqripOYarGlN7rLBVeJrP0yC1U/aoVlHGHrE8n2gybAcHqg/\nhOztZ0Ep56U08KhX0+1AbbHve9gG+rQsCX5nONRySTZDqJsxa8Df6hEWRvEZ5mqy\n3X8LfPyN72KbK92doi1CbgmWLsgtYoKUblda9gWJAoGBANZUEL9BYR0rpruDyVFt\n5TbPy/nFQiZs1n+hGHTIp6Vv02+1LjN5htGDQIa9k2nnhwLlZHRyLWBlWQ1VWjUo\nrwYS7UBgUpP9CE7JEma2OwAzjQ/nIzlofQTHFMjoj+GGAwp4GcA7Ivyf1yieystT\nBMCzNX7pa/wzagVJC7CH4pmL\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@audit-management-system-271ea.iam.gserviceaccount.com",
+  "client_id": "113780063914637992800",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40audit-management-system-271ea.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
