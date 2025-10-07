@@ -41,12 +41,12 @@ def role_required(*required_roles):
     return decorator
 
 def get_current_user():
-    """Get current user from session - prioritizes Firestore over DATA_STORE"""
+    """Get current user from session - uses Firestore exclusively"""
     if 'user_id' in session:
         try:
             user_id = session['user_id']
             
-            # First check Firestore if available
+            # Get user from Firestore
             try:
                 from firebase_config import FIREBASE_AVAILABLE
                 if FIREBASE_AVAILABLE:
@@ -55,14 +55,12 @@ def get_current_user():
                     user = user_model.get(user_id)
                     if user and user.get('is_active', False):
                         return user
+                else:
+                    logging.error("Firebase not available - cannot get user")
+                    return None
             except Exception as e:
                 logging.error(f"Error checking Firestore for user: {e}")
-            
-            # Fallback to DATA_STORE (for test users and backwards compatibility)
-            if user_id in DATA_STORE['users']:
-                user = DATA_STORE['users'][user_id]
-                if user and user.get('is_active', False):
-                    return user
+                return None
                 
         except Exception as e:
             logging.error(f"Error getting current user: {e}")

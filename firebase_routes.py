@@ -3,7 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app import app
 from firebase_auth import login_required, role_required, get_current_user, log_audit_action, check_password_reset_required
 from firebase_config import authenticate_user, create_user_account, get_user_info
-from data_store import DATA_STORE, find_user_by_email, initialize_sample_data
+from data_store import find_user_by_email
 from firebase_models import UserModel, DepartmentModel, AuditModel, RiskAssessmentModel, FindingModel, CorrectiveActionModel, MessageModel, EvidenceModel, ReportModel, AuditLogModel
 # Import utilities - will create these functions if needed
 import secrets
@@ -40,6 +40,7 @@ from datetime import datetime, timedelta
 import os
 import uuid
 import json
+import logging
 from uuid import uuid4
 # Try importing reportlab with fallback
 try:
@@ -55,9 +56,6 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
 import io
 
-# Initialize sample data on first import
-initialize_sample_data()
-
 # Initialize model instances
 user_model = UserModel()
 dept_model = DepartmentModel() 
@@ -69,6 +67,35 @@ message_model = MessageModel()
 evidence_model = EvidenceModel()
 report_model = ReportModel()
 audit_log_model = AuditLogModel()
+
+# Initialize Firestore with head user if needed
+def initialize_firestore_data():
+    """Initialize Firestore with head of business control user if not exists"""
+    try:
+        from firebase_config import FIREBASE_AVAILABLE
+        if FIREBASE_AVAILABLE:
+            # Check if head user already exists
+            existing_user = user_model.get_user_by_email('head@audit.system')
+            if not existing_user:
+                # Create head user in Firestore
+                head_data = {
+                    'email': 'head@audit.system',
+                    'role': 'head_of_business_control',
+                    'first_name': 'Business',
+                    'last_name': 'Control',
+                    'username': 'head_control',
+                    'phone': '+1-555-0000',
+                    'is_active': True,
+                    'password_reset_required': False,
+                    'firebase_uid': 'test-head-uid',
+                    'temporary_password': 'admin123'
+                }
+                user_model.create_user(head_data)
+                print("Initialized head of business control user in Firestore: head@audit.system")
+    except Exception as e:
+        print(f"Error initializing Firestore data: {e}")
+
+initialize_firestore_data()
 
 @app.route('/')
 def landing():
@@ -116,10 +143,11 @@ def login():
     session['user_role'] = user_data['role']
     session['firebase_token'] = firebase_user['idToken']
     
-    # Update last login
-    # Update last login time in data store
-    if user_data['id'] in DATA_STORE['users']:
-        DATA_STORE['users'][user_data['id']]['last_login'] = datetime.now()
+    # Update last login in Firestore
+    try:
+        user_model.update(user_data['id'], {'last_login': datetime.now()})
+    except Exception as e:
+        logging.error(f"Error updating last login: {e}")
     
     log_audit_action('login', 'user', user_data['id'], f'User {email} logged in')
     
